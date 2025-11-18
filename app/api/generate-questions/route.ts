@@ -83,7 +83,7 @@ Output JSON ONLY in this format:
       temperature: 0.4,
     });
 
-    const content = completion.choices[0]?.message?.content;
+        const content = completion.choices[0]?.message?.content;
 
     if (!content) {
       console.error("No content from OpenAI:", completion);
@@ -93,11 +93,8 @@ Output JSON ONLY in this format:
       );
     }
 
-    // content can be string or array of content parts; handle both
-    const text =
-      typeof content === "string"
-        ? content
-        : content.map((c: any) => c.text ?? c).join("");
+    const text = content as string;
+
 
     let parsed: any;
     try {
