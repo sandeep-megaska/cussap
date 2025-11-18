@@ -12,8 +12,8 @@ export default function HomePage() {
     >
       <h1>Hello from cussap 👋</h1>
       <p>
-        If you can see this on <code>https://cussap.vercel.app/</code>,
-        your Next.js app and app router are working.
+        If you see this on <code>cussap.vercel.app</code> or the preview URL,
+        routing + build are correct.
       </p>
     </main>
   );
