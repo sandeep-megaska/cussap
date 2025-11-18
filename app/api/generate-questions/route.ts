@@ -67,9 +67,10 @@ Output JSON ONLY in this format:
 }
 `;
 
-    const response = await client.responses.create({
+    // Use Chat Completions API instead of Responses
+    const completion = await client.chat.completions.create({
       model: "gpt-4.1-mini",
-      input: [
+      messages: [
         {
           role: "system",
           content: systemPrompt,
@@ -79,20 +80,24 @@ Output JSON ONLY in this format:
           content: userPrompt,
         },
       ],
+      temperature: 0.4,
     });
 
-    // Extract the text (JSON) from the response
-    const text =
-      (response.output[0] as any)?.content?.[0]?.text ??
-      (response.output[0] as any)?.content?.[0]?.content;
+    const content = completion.choices[0]?.message?.content;
 
-    if (!text) {
-      console.error("No text output from OpenAI", response);
+    if (!content) {
+      console.error("No content from OpenAI:", completion);
       return NextResponse.json(
         { error: "Failed to generate questions" },
         { status: 500 }
       );
     }
+
+    // content can be string or array of content parts; handle both
+    const text =
+      typeof content === "string"
+        ? content
+        : content.map((c: any) => c.text ?? c).join("");
 
     let parsed: any;
     try {
@@ -132,4 +137,3 @@ Output JSON ONLY in this format:
     );
   }
 }
-
