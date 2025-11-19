@@ -80,27 +80,25 @@ export default function ParentPortalPage() {
       setSessionsError(null);
 
       const { data, error } = await supabase
-        .from("edtech.quiz_sessions")
-        .select(
-          `
-          id,
-          grade,
-          subject,
-          purpose,
-          chapter,
-          difficulty,
-          total_questions,
-          correct_answers,
-          score_percent,
-          completed_at,
-          students:student_id (
-            name,
-            parent_email
-          )
-        `
-        )
-        .eq("students.parent_email", userEmail)
-        .order("completed_at", { ascending: false });
+  .from("edtech.quiz_sessions")
+  .select(`
+    id,
+    grade,
+    subject,
+    purpose,
+    chapter,
+    difficulty,
+    total_questions,
+    correct_answers,
+    score_percent,
+    completed_at,
+    edtech.students!quiz_sessions_student_id_fkey (
+      name,
+      parent_email
+    )
+  `)
+  .eq("students.parent_email", userEmail)
+  .order("completed_at", { ascending: false });
 
       if (error) {
         console.error("Error loading parent sessions:", error);
