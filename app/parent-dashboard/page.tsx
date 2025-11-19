@@ -33,7 +33,8 @@ async function fetchSessions(): Promise<{
 }> {
   // We get last 100 sessions, newest first
   const { data, error } = await supabase
-    .from("edtech.quiz_sessions")
+  .schema("edtech")
+  .from("quiz_sessions")
     .select(
       `
       id,
