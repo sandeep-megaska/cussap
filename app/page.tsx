@@ -1,12 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-// ...your other imports
-import {
-  getSubjectsForGrade,
-  getChaptersForGradeSubject,
-} from "../lib/syllabus";
-
-import React, { useState, useMemo } from "react";
+import { getSubjectsForGrade, getChaptersForGradeSubject } from "../lib/syllabus";
 
 
 type Difficulty = "easy" | "medium" | "advanced" | "super_brain";
