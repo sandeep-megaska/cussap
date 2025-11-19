@@ -1,11 +1,13 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import { getSubjectsForGrade, getChaptersForGradeSubject } from "../lib/syllabus";
 
+import { useState, useEffect, useMemo } from "react";
+import {
+  getSubjectsForGrade,
+  getChaptersForGradeSubject,
+} from "../lib/syllabus";
 
 type Difficulty = "easy" | "medium" | "advanced" | "super_brain";
 type Grade = 7 | 8 | 9 | 10 | 11 | 12;
-type Subject = "Maths" | "Science" | "Physics" | "Chemistry" | "Biology";
 
 type Purpose =
   | "general"
@@ -21,19 +23,19 @@ interface Question {
   question: string;
   options: string[];
   correctIndex: number;
-  explanation?: string; // optional from generator
+  explanation?: string;
   difficulty: Difficulty;
 }
 
-const GRADES: Grade[] = [7, 8, 9, 10, 11, 12];
+type Stage = "setup" | "loading" | "quiz" | "result" | "review";
 
-const SUBJECTS: Subject[] = [
-  "Maths",
-  "Science",
-  "Physics",
-  "Chemistry",
-  "Biology",
-];
+interface ExplanationState {
+  text?: string;
+  loading: boolean;
+  error?: string;
+}
+
+const GRADES: Grade[] = [7, 8, 9, 10, 11, 12];
 
 const PURPOSES: { value: Purpose; label: string }[] = [
   { value: "general", label: "General Practice" },
@@ -45,31 +47,6 @@ const PURPOSES: { value: Purpose; label: string }[] = [
   { value: "olympiad", label: "Olympiad / Talent Exam" },
 ];
 
-// Very simple chapter mapping for now – you can expand this later easily.
-const CHAPTERS_BY_GRADE_SUBJECT: Record<string, string[]> = {
-  "8-Maths": [
-    "Rational Numbers",
-    "Linear Equations in One Variable",
-    "Squares and Square Roots",
-    "Cubes and Cube Roots",
-    "Comparing Quantities",
-    "Algebraic Expressions and Identities",
-  ],
-};
-
-function getChapters(grade: Grade, subject: Subject): string[] {
-  const key = `${grade}-${subject}`;
-  const specific = CHAPTERS_BY_GRADE_SUBJECT[key];
-  if (specific && specific.length > 0) return specific;
-
-  // Fallback generic options if we haven't customised that combo yet
-  return [
-    "Full Syllabus / Mixed Questions",
-    "Recent Topics Covered",
-    "Challenging Problems (All Chapters)",
-  ];
-}
-
 function calculateLevel(scorePercent: number): string {
   if (scorePercent >= 80) return "Super Brain";
   if (scorePercent >= 60) return "Advanced";
@@ -77,140 +54,86 @@ function calculateLevel(scorePercent: number): string {
   return "Needs Foundation (Easy)";
 }
 
-type Stage = "setup" | "loading" | "quiz" | "result" | "review";
-
-interface ExplanationState {
-  text?: string;
-  loading: boolean;
-  error?: string;
-}
-
 export default function HomePage() {
   const [stage, setStage] = useState<Stage>("setup");
-const [grade, setGrade] = useState<number>(8);
+
+  // Core selections
+  const [grade, setGrade] = useState<Grade>(8);
   const [subject, setSubject] = useState<string>("Maths");
   const [chapter, setChapter] = useState<string>("");
-  // Student profile selections
-// List of subjects for the chosen grade
-const subjectsForGrade = useMemo(
-  () => getSubjectsForGrade(grade),
-  [grade]
-);
 
-// List of chapters for chosen grade + subject
-const chaptersForSelection = useMemo(
-  () => getChaptersForGradeSubject(grade, subject),
-  [grade, subject]
-);
-
-// When grade changes, ensure subject is valid
-useEffect(() => {
-  const availableSubjects = getSubjectsForGrade(grade);
-  if (availableSubjects.length === 0) {
-    setSubject("");
-    setChapter("");
-    return;
-  }
-
-  // If current subject is not valid for this grade, set to first
-  if (!availableSubjects.includes(subject)) {
-    setSubject(availableSubjects[0]);
-    setChapter(""); // will be reset by next effect
-  }
-}, [grade]);
-
-// When subject changes, ensure chapter is valid
-useEffect(() => {
-  const availableChapters = getChaptersForGradeSubject(grade, subject);
-  if (availableChapters.length === 0) {
-    setChapter("");
-    return;
-  }
-
-  if (!availableChapters.includes(chapter)) {
-    setChapter(availableChapters[0]);
-  }
-}, [grade, subject]);
-
-
-  
-  const [grade, setGrade] = useState<Grade>(8);
-  const [subject, setSubject] = useState<Subject>("Maths");
   const [purpose, setPurpose] = useState<Purpose>("general");
- const [studentName, setStudentName] = useState<string>("");
-const [parentEmail, setParentEmail] = useState<string>("");
-const [savingSession, setSavingSession] = useState(false);
-  const [instructorLoading, setInstructorLoading] = useState(false);
-const [instructorExplanation, setInstructorExplanation] = useState<string | null>(null);
-const [instructorError, setInstructorError] = useState<string | null>(null);
-
-
-  const [chapter, setChapter] = useState<string>("");
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+
+  const [studentName, setStudentName] = useState<string>("");
+  const [parentEmail, setParentEmail] = useState<string>("");
+
+  const [savingSession, setSavingSession] = useState(false);
+
+  // Quiz state
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [scorePercent, setScorePercent] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // question.id -> explanation state
+  // Per-question AI explanation (Explain this question)
   const [explanations, setExplanations] = useState<
     Record<string, ExplanationState>
   >({});
-const handleInstructorExplain = async (questionIndex: number) => {
-  if (!questions[questionIndex]) return;
 
-  const q = questions[questionIndex];
+  // AI Instructor (global per current question)
+  const [instructorLoading, setInstructorLoading] = useState(false);
+  const [instructorExplanation, setInstructorExplanation] =
+    useState<string | null>(null);
+  const [instructorError, setInstructorError] = useState<string | null>(null);
 
-  setInstructorLoading(true);
-  setInstructorExplanation(null);
-  setInstructorError(null);
+  // ----- Derived syllabus lists -----
 
-  try {
-    const res = await fetch("/api/ai-instructor", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        grade,
-        subject,
-        chapter,
-        difficulty,
-        question: q.question,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        chosenIndex: answers[questionIndex],
-      }),
-    });
+  const subjectsForGrade = useMemo(
+    () => getSubjectsForGrade(grade),
+    [grade]
+  );
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || "Failed to get explanation");
-    }
-
-    const data = await res.json();
-    setInstructorExplanation(data.explanation || "No explanation returned.");
-  } catch (err: any) {
-    console.error(err);
-    setInstructorError(
-      err.message || "Something went wrong while explaining."
-    );
-  } finally {
-    setInstructorLoading(false);
-  }
-};
-  
-  const availableChapters = useMemo(
-    () => getChapters(grade, subject),
+  const chaptersForSelection = useMemo(
+    () => getChaptersForGradeSubject(grade, subject),
     [grade, subject]
   );
 
-  // If chapter is empty or doesn't exist in new list (when grade/subject changes), reset it
-  React.useEffect(() => {
-    if (!availableChapters.includes(chapter)) {
-      setChapter(availableChapters[0] ?? "");
+  // Ensure subject is valid for grade
+  useEffect(() => {
+    const availableSubjects = getSubjectsForGrade(grade);
+    if (availableSubjects.length === 0) {
+      setSubject("");
+      setChapter("");
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableChapters]);
+    if (!availableSubjects.includes(subject)) {
+      setSubject(availableSubjects[0]);
+      setChapter("");
+    }
+  }, [grade]);
+
+  // Ensure chapter is valid for (grade, subject)
+  useEffect(() => {
+    const availableChapters = getChaptersForGradeSubject(grade, subject);
+    if (availableChapters.length === 0) {
+      setChapter("");
+      return;
+    }
+    if (!availableChapters.includes(chapter)) {
+      setChapter(availableChapters[0]);
+    }
+  }, [grade, subject]);
+
+  // Reset AI Instructor explanation when moving between questions
+  useEffect(() => {
+    setInstructorExplanation(null);
+    setInstructorError(null);
+    setInstructorLoading(false);
+  }, [currentIndex]);
+
+  // ----- Quiz handlers -----
 
   const startQuiz = async () => {
     if (!chapter) return;
@@ -224,7 +147,7 @@ const handleInstructorExplain = async (questionIndex: number) => {
         body: JSON.stringify({
           chapter,
           difficulty,
-          count: 10, // increase to 25 later
+          count: 10, // 10 for now; can increase later
           grade,
           subject,
           purpose,
@@ -232,7 +155,7 @@ const handleInstructorExplain = async (questionIndex: number) => {
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to generate questions");
       }
 
@@ -257,20 +180,23 @@ const handleInstructorExplain = async (questionIndex: number) => {
   };
 
   const goNext = async () => {
-  if (currentIndex < questions.length - 1) {
-    setCurrentIndex((i) => i + 1);
-  } else {
-    // finish
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex((i) => i + 1);
+      return;
+    }
+
+    // Finish quiz
     const correctCount = questions.reduce((acc, q, idx) => {
       return acc + (answers[idx] === q.correctIndex ? 1 : 0);
     }, 0);
+
     const percent = Math.round(
       (correctCount / questions.length) * 100
     );
     setScorePercent(percent);
     setStage("result");
 
-    // fire-and-forget save to Supabase
+    // Save quiz session (fire-and-forget)
     try {
       setSavingSession(true);
       await fetch("/api/quiz-session", {
@@ -294,12 +220,12 @@ const handleInstructorExplain = async (questionIndex: number) => {
     } finally {
       setSavingSession(false);
     }
-  }
-};
-
+  };
 
   const goPrev = () => {
-    if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+    if (currentIndex > 0) {
+      setCurrentIndex((i) => i - 1);
+    }
   };
 
   const resetQuiz = () => {
@@ -308,13 +234,17 @@ const handleInstructorExplain = async (questionIndex: number) => {
     setScorePercent(0);
     setStage("setup");
     setExplanations({});
+    setError(null);
   };
 
   const level = calculateLevel(scorePercent);
 
-  // ---- AI explanation handler ----
+  // ----- AI: Explain question (per-question text) -----
 
-  const requestExplanation = async (q: Question, yourAnswerIndex: number) => {
+  const requestExplanation = async (
+    q: Question,
+    yourAnswerIndex: number
+  ) => {
     setExplanations((prev) => ({
       ...prev,
       [q.id]: {
@@ -342,7 +272,7 @@ const handleInstructorExplain = async (questionIndex: number) => {
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to get explanation");
       }
 
@@ -368,126 +298,180 @@ const handleInstructorExplain = async (questionIndex: number) => {
     }
   };
 
-  // ---- RENDER ----
+  // ----- AI Instructor: “Explain like a teacher” -----
+
+  const handleInstructorExplain = async (questionIndex: number) => {
+    if (!questions[questionIndex]) return;
+
+    const q = questions[questionIndex];
+
+    setInstructorLoading(true);
+    setInstructorExplanation(null);
+    setInstructorError(null);
+
+    try {
+      const res = await fetch("/api/ai-instructor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          grade,
+          subject,
+          chapter,
+          difficulty,
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+          chosenIndex: answers[questionIndex],
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to get explanation");
+      }
+
+      const data = await res.json();
+      setInstructorExplanation(data.explanation || "No explanation returned.");
+    } catch (err: any) {
+      console.error(err);
+      setInstructorError(
+        err.message || "Something went wrong while explaining."
+      );
+    } finally {
+      setInstructorLoading(false);
+    }
+  };
+
+  // ----- RENDER -----
 
   if (stage === "setup") {
     return (
-       <main className="page-main">
-    <div className="badge-tagline">
-      <span className="badge-tagline-dot" />
-      Student Mode · Practice & Diagnose
-    </div>
+      <main className="page-main">
+        <div className="badge-tagline">
+          <span className="badge-tagline-dot" />
+          Student Mode · Practice & Diagnose
+        </div>
         <h1>Smart CBSE Practice – AI Quiz</h1>
-        <p>
-          Choose your class, subject, and goal to get a customised quiz.
-        </p>
+        <p>Choose your class, subject, and goal to get a customised quiz.</p>
 
-        {error && (
-          <p style={{ color: "red" }}>
-            Error: {error}
-          </p>
-        )}
+        {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
+        {/* Student / Parent details */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
             gap: 12,
             marginBottom: 16,
           }}
         >
-<div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: 12,
-    marginBottom: 16,
-  }}
->
-  <label>
-    Student Name:
-    <input
-      type="text"
-      value={studentName}
-      onChange={(e) => setStudentName(e.target.value)}
-      placeholder="Optional"
-      style={{ display: "block", width: "100%", marginTop: 4 }}
-    />
-  </label>
+          <label>
+            Student Name:
+            <input
+              type="text"
+              value={studentName}
+              onChange={(e) => setStudentName(e.target.value)}
+              placeholder="Optional"
+              style={{ display: "block", width: "100%", marginTop: 4 }}
+            />
+          </label>
 
-  <label>
-    Parent Email (optional):
-    <input
-      type="email"
-      value={parentEmail}
-      onChange={(e) => setParentEmail(e.target.value)}
-      placeholder="for progress reports"
-      style={{ display: "block", width: "100%", marginTop: 4 }}
-    />
-  </label>
-</div>
-
-          
-         {/* Class / Grade */}
-<label style={{ display: "block", marginBottom: 8 }}>
-  Class:
-  <select
-    value={grade}
-    onChange={(e) => setGrade(Number(e.target.value))}
-    style={{ marginLeft: 8 }}
-  >
-    {/* Only show grades you actually support right now */}
-    <option value={7}>Class 7</option>
-    <option value={8}>Class 8</option>
-    <option value={9}>Class 9</option>
-    {/* add 10, 11, 12 later when ready */}
-  </select>
-</label>
-
-{/* Subject */}
-<label style={{ display: "block", marginBottom: 8 }}>
-  Subject:
-  <select
-    value={subject}
-    onChange={(e) => setSubject(e.target.value)}
-    style={{ marginLeft: 8 }}
-  >
-    {subjectsForGrade.length === 0 ? (
-      <option value="">No subjects configured</option>
-    ) : (
-      subjectsForGrade.map((subj) => (
-        <option key={subj} value={subj}>
-          {subj}
-        </option>
-      ))
-    )}
-  </select>
-</label>
-
-{/* Chapter */}
-<label style={{ display: "block", marginBottom: 8 }}>
-  Chapter / Topic:
-  <select
-    value={chapter}
-    onChange={(e) => setChapter(e.target.value)}
-    style={{ marginLeft: 8, minWidth: 260 }}
-  >
-    {chaptersForSelection.length === 0 ? (
-      <option value="">
-        Select a subject to see chapters
-      </option>
-    ) : (
-      chaptersForSelection.map((ch) => (
-        <option key={ch} value={ch}>
-          {ch}
-        </option>
-      ))
-    )}
-  </select>
-</label>
-
+          <label>
+            Parent Email (optional):
+            <input
+              type="email"
+              value={parentEmail}
+              onChange={(e) => setParentEmail(e.target.value)}
+              placeholder="for progress reports"
+              style={{ display: "block", width: "100%", marginTop: 4 }}
+            />
+          </label>
         </div>
 
+        {/* Core selection grid */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
+          {/* Class / Grade */}
+          <label style={{ display: "block", marginBottom: 8 }}>
+            Class:
+            <select
+              value={grade}
+              onChange={(e) => setGrade(Number(e.target.value) as Grade)}
+              style={{ marginLeft: 8 }}
+            >
+              <option value={7}>Class 7</option>
+              <option value={8}>Class 8</option>
+              <option value={9}>Class 9</option>
+              <option value={10}>Class 10</option>
+              <option value={11}>Class 11</option>
+              <option value={12}>Class 12</option>
+            </select>
+          </label>
+
+          {/* Subject */}
+          <label style={{ display: "block", marginBottom: 8 }}>
+            Subject:
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              style={{ marginLeft: 8 }}
+            >
+              {subjectsForGrade.length === 0 ? (
+                <option value="">No subjects configured</option>
+              ) : (
+                subjectsForGrade.map((subj) => (
+                  <option key={subj} value={subj}>
+                    {subj}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
+
+          {/* Chapter */}
+          <label style={{ display: "block", marginBottom: 8 }}>
+            Chapter / Topic:
+            <select
+              value={chapter}
+              onChange={(e) => setChapter(e.target.value)}
+              style={{ marginLeft: 8, minWidth: 260 }}
+            >
+              {chaptersForSelection.length === 0 ? (
+                <option value="">Select a subject to see chapters</option>
+              ) : (
+                chaptersForSelection.map((ch) => (
+                  <option key={ch} value={ch}>
+                    {ch}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
+
+          {/* Purpose / Goal */}
+          <label style={{ display: "block", marginBottom: 8 }}>
+            Goal:
+            <select
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value as Purpose)}
+              style={{ marginLeft: 8 }}
+            >
+              {PURPOSES.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {/* Difficulty */}
         <div style={{ marginBottom: 12 }}>
           <label>
             Difficulty:
@@ -519,14 +503,11 @@ const handleInstructorExplain = async (questionIndex: number) => {
 
   if (stage === "loading") {
     return (
-      <main style={{ maxWidth: 600, margin: "0 auto", padding: 16 }}>
+      <main className="page-main">
         <h2>Preparing your quiz…</h2>
         <p>
           Class {grade} – {subject} –{" "}
-          {
-            PURPOSES.find((p) => p.value === purpose)?.label ??
-            "Practice"
-          }
+          {PURPOSES.find((p) => p.value === purpose)?.label ?? "Practice"}
         </p>
         <p>Please wait a moment while we generate questions.</p>
       </main>
@@ -538,17 +519,15 @@ const handleInstructorExplain = async (questionIndex: number) => {
     const selected = answers[currentIndex];
 
     return (
-      <main style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
+      <main className="page-main">
         <h2>
           Class {grade} {subject} – Q{currentIndex + 1} /{" "}
           {questions.length}
         </h2>
         <p>
           <strong>Goal:</strong>{" "}
-          {
-            PURPOSES.find((p) => p.value === purpose)?.label ??
-            "Practice"
-          }{" "}
+          {PURPOSES.find((p) => p.value === purpose)?.label ??
+            "Practice"}{" "}
           | <strong>Difficulty:</strong> {difficulty}
         </p>
         <p style={{ marginTop: 16 }}>{q.question}</p>
@@ -585,7 +564,7 @@ const handleInstructorExplain = async (questionIndex: number) => {
 
   if (stage === "result") {
     return (
-      <main style={{ maxWidth: 650, margin: "0 auto", padding: 16 }}>
+      <main className="page-main">
         <h1>Quiz Result</h1>
         <p>
           <strong>Class:</strong> {grade}
@@ -595,10 +574,8 @@ const handleInstructorExplain = async (questionIndex: number) => {
         </p>
         <p>
           <strong>Goal:</strong>{" "}
-          {
-            PURPOSES.find((p) => p.value === purpose)?.label ??
-            "Practice"
-          }
+          {PURPOSES.find((p) => p.value === purpose)?.label ??
+            "Practice"}
         </p>
         <p>
           <strong>Chapter:</strong> {chapter}
@@ -607,8 +584,7 @@ const handleInstructorExplain = async (questionIndex: number) => {
           <strong>Score:</strong> {scorePercent}%
         </p>
         <p>
-          <strong>Your level in this chapter:</strong>{" "}
-          <span>{level}</span>
+          <strong>Your level in this chapter:</strong> <span>{level}</span>
         </p>
 
         <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
@@ -627,24 +603,22 @@ const handleInstructorExplain = async (questionIndex: number) => {
     );
 
     return (
-      <main style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
+      <main className="page-main">
         <h1>Review & Learn</h1>
         <p>
           Class {grade} – {subject} –{" "}
-          {
-            PURPOSES.find((p) => p.value === purpose)?.label ??
-            "Practice"
-          }
+          {PURPOSES.find((p) => p.value === purpose)?.label ??
+            "Practice"}
         </p>
         <p>
-          We’ll show you the questions you got wrong, with correct
-          answers and explanations.
+          We’ll show you the questions you got wrong, with correct answers and
+          explanations.
         </p>
 
         {wrongQuestions.length === 0 && (
           <p>
-            Amazing! You got everything right. Try a harder difficulty
-            or a tougher exam goal next time.
+            Amazing! You got everything right. Try a harder difficulty or a
+            tougher exam goal next time.
           </p>
         )}
 
@@ -687,7 +661,7 @@ const handleInstructorExplain = async (questionIndex: number) => {
                 </p>
               )}
 
-              <div style={{ marginTop: 8 }}>
+              <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
                 <button
                   onClick={() =>
                     requestExplanation(q, yourAnswerIndex)
@@ -697,6 +671,16 @@ const handleInstructorExplain = async (questionIndex: number) => {
                   {explanationState?.loading
                     ? "Explaining..."
                     : "Explain this question"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleInstructorExplain(originalIndex)}
+                  disabled={instructorLoading}
+                >
+                  {instructorLoading
+                    ? "AI Instructor is thinking..."
+                    : "Ask AI Instructor"}
                 </button>
               </div>
 
@@ -715,49 +699,41 @@ const handleInstructorExplain = async (questionIndex: number) => {
             </div>
           );
         })}
-{/* Somewhere under the question & options in REVIEW stage */}
-<div style={{ marginTop: 12 }}>
-  <button
-    type="button"
-    onClick={() => handleInstructorExplain(currentIndex)}
-    disabled={instructorLoading}
-  >
-    {instructorLoading ? "AI Instructor is thinking..." : "Ask AI Instructor"}
-  </button>
-</div>
 
-{instructorError && (
-  <p style={{ color: "salmon", marginTop: 8 }}>
-    {instructorError}
-  </p>
-)}
+        {instructorError && (
+          <p style={{ color: "salmon", marginTop: 8 }}>
+            {instructorError}
+          </p>
+        )}
 
-{instructorExplanation && (
-  <div
-    style={{
-      marginTop: 12,
-      padding: 10,
-      borderRadius: 8,
-      border: "1px solid rgba(148, 163, 184, 0.5)",
-      background: "rgba(15,23,42,0.85)",
-      fontSize: 14,
-      lineHeight: 1.5,
-      whiteSpace: "pre-wrap",
-    }}
-  >
-    <strong style={{ display: "block", marginBottom: 4 }}>
-      AI Instructor:
-    </strong>
-    {instructorExplanation}
-  </div>
-)}
+        {instructorExplanation && (
+          <div
+            style={{
+              marginTop: 12,
+              padding: 10,
+              borderRadius: 8,
+              border: "1px solid rgba(148, 163, 184, 0.5)",
+              background: "rgba(15,23,42,0.85)",
+              fontSize: 14,
+              lineHeight: 1.5,
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            <strong
+              style={{ display: "block", marginBottom: 4 }}
+            >
+              AI Instructor:
+            </strong>
+            {instructorExplanation}
+          </div>
+        )}
 
-        <button onClick={resetQuiz}>Back to new quiz</button>
+        <button onClick={resetQuiz} style={{ marginTop: 16 }}>
+          Back to new quiz
+        </button>
       </main>
     );
   }
 
   return null;
 }
-
-
