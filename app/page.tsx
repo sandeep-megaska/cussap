@@ -111,7 +111,48 @@ const [instructorError, setInstructorError] = useState<string | null>(null);
   const [explanations, setExplanations] = useState<
     Record<string, ExplanationState>
   >({});
+const handleInstructorExplain = async (questionIndex: number) => {
+  if (!questions[questionIndex]) return;
 
+  const q = questions[questionIndex];
+
+  setInstructorLoading(true);
+  setInstructorExplanation(null);
+  setInstructorError(null);
+
+  try {
+    const res = await fetch("/api/ai-instructor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        grade,
+        subject,
+        chapter,
+        difficulty,
+        question: q.question,
+        options: q.options,
+        correctIndex: q.correctIndex,
+        chosenIndex: answers[questionIndex],
+      }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to get explanation");
+    }
+
+    const data = await res.json();
+    setInstructorExplanation(data.explanation || "No explanation returned.");
+  } catch (err: any) {
+    console.error(err);
+    setInstructorError(
+      err.message || "Something went wrong while explaining."
+    );
+  } finally {
+    setInstructorLoading(false);
+  }
+};
+  
   const availableChapters = useMemo(
     () => getChapters(grade, subject),
     [grade, subject]
@@ -680,44 +721,4 @@ const [instructorError, setInstructorError] = useState<string | null>(null);
   return null;
 }
 
-const handleInstructorExplain = async (questionIndex: number) => {
-  if (!questions[questionIndex]) return;
 
-  const q = questions[questionIndex];
-
-  setInstructorLoading(true);
-  setInstructorExplanation(null);
-  setInstructorError(null);
-
-  try {
-    const res = await fetch("/api/ai-instructor", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        grade,
-        subject,
-        chapter,
-        difficulty,
-        question: q.question,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        chosenIndex: answers[questionIndex],
-      }),
-    });
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || "Failed to get explanation");
-    }
-
-    const data = await res.json();
-    setInstructorExplanation(data.explanation || "No explanation returned.");
-  } catch (err: any) {
-    console.error(err);
-    setInstructorError(
-      err.message || "Something went wrong while explaining."
-    );
-  } finally {
-    setInstructorLoading(false);
-  }
-};
