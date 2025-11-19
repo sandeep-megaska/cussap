@@ -281,7 +281,11 @@ const [savingSession, setSavingSession] = useState(false);
 
   if (stage === "setup") {
     return (
-      <main style={{ maxWidth: 700, margin: "0 auto", padding: 16 }}>
+       <main className="page-main">
+    <div className="badge-tagline">
+      <span className="badge-tagline-dot" />
+      Student Mode · Practice & Diagnose
+    </div>
         <h1>Smart CBSE Practice – AI Quiz</h1>
         <p>
           Choose your class, subject, and goal to get a customised quiz.
