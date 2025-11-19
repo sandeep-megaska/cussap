@@ -91,6 +91,9 @@ export default function HomePage() {
   const [grade, setGrade] = useState<Grade>(8);
   const [subject, setSubject] = useState<Subject>("Maths");
   const [purpose, setPurpose] = useState<Purpose>("general");
+ const [studentName, setStudentName] = useState<string>("");
+const [parentEmail, setParentEmail] = useState<string>("");
+const [savingSession, setSavingSession] = useState(false);
 
   const [chapter, setChapter] = useState<string>("");
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
@@ -162,21 +165,47 @@ export default function HomePage() {
     setAnswers(newAnswers);
   };
 
-  const goNext = () => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((i) => i + 1);
-    } else {
-      // finish
-      const correctCount = questions.reduce((acc, q, idx) => {
-        return acc + (answers[idx] === q.correctIndex ? 1 : 0);
-      }, 0);
-      const percent = Math.round(
-        (correctCount / questions.length) * 100
-      );
-      setScorePercent(percent);
-      setStage("result");
+  const goNext = async () => {
+  if (currentIndex < questions.length - 1) {
+    setCurrentIndex((i) => i + 1);
+  } else {
+    // finish
+    const correctCount = questions.reduce((acc, q, idx) => {
+      return acc + (answers[idx] === q.correctIndex ? 1 : 0);
+    }, 0);
+    const percent = Math.round(
+      (correctCount / questions.length) * 100
+    );
+    setScorePercent(percent);
+    setStage("result");
+
+    // fire-and-forget save to Supabase
+    try {
+      setSavingSession(true);
+      await fetch("/api/quiz-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentName,
+          parentEmail,
+          grade,
+          subject,
+          purpose,
+          chapter,
+          difficulty,
+          questions,
+          answers,
+          scorePercent: percent,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to save quiz session", err);
+    } finally {
+      setSavingSession(false);
     }
-  };
+  }
+};
+
 
   const goPrev = () => {
     if (currentIndex > 0) setCurrentIndex((i) => i - 1);
@@ -272,6 +301,38 @@ export default function HomePage() {
             marginBottom: 16,
           }}
         >
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 12,
+    marginBottom: 16,
+  }}
+>
+  <label>
+    Student Name:
+    <input
+      type="text"
+      value={studentName}
+      onChange={(e) => setStudentName(e.target.value)}
+      placeholder="Optional"
+      style={{ display: "block", width: "100%", marginTop: 4 }}
+    />
+  </label>
+
+  <label>
+    Parent Email (optional):
+    <input
+      type="email"
+      value={parentEmail}
+      onChange={(e) => setParentEmail(e.target.value)}
+      placeholder="for progress reports"
+      style={{ display: "block", width: "100%", marginTop: 4 }}
+    />
+  </label>
+</div>
+
+          
           <label>
             Class:
             <select
