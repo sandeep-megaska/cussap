@@ -58,7 +58,7 @@ Rules:
 - Keep the explanation roughly 150–250 words.
 - Use light formatting with bullet points and short paragraphs.
 - Do NOT mention that you are an AI or language model.
-`;
+`.trim();
 
     const userPrompt = `
 Student details:
@@ -96,37 +96,22 @@ Please respond with a friendly explanation that covers:
 
 Talk directly to the student using "you".
 Avoid very formal textbook language; be a human teacher.
-`;
+`.trim();
 
-    const response = await client.responses.create({
+    const completion = await client.chat.completions.create({
       model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "system",
-          content: [{ type: "text", text: systemPrompt }],
-        },
-        {
-          role: "user",
-          content: [{ type: "text", text: userPrompt }],
-        },
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
       ],
+      temperature: 0.4,
     });
 
-    // The Responses API wraps content; we unwrap it in a tolerant way
-    const output = (response as any).output?.[0]?.content ?? [];
-    let text = "";
+    const explanation =
+      completion.choices[0]?.message?.content ||
+      "Sorry, I couldn't generate an explanation.";
 
-    if (typeof output === "string") {
-      text = output;
-    } else if (Array.isArray(output)) {
-      text = output
-        .map((chunk: any) => chunk.text ?? chunk)
-        .join("\n\n");
-    } else {
-      text = "Sorry, I couldn't generate an explanation.";
-    }
-
-    return NextResponse.json({ explanation: text });
+    return NextResponse.json({ explanation });
   } catch (err) {
     console.error("Error in /api/ai-instructor:", err);
     return NextResponse.json(
