@@ -372,7 +372,7 @@ export default function HomePage() {
               value={studentName}
               onChange={(e) => setStudentName(e.target.value)}
               placeholder="Optional"
-              style={{ display: "block", width: "100%", marginTop: 4 }}
+              style={{ display: "block", width: "80%", marginTop: 4 }}
             />
           </label>
 
@@ -383,7 +383,7 @@ export default function HomePage() {
               value={parentEmail}
               onChange={(e) => setParentEmail(e.target.value)}
               placeholder="for progress reports"
-              style={{ display: "block", width: "100%", marginTop: 4 }}
+              style={{ display: "block", width: "80%", marginTop: 4 }}
             />
           </label>
         </div>
