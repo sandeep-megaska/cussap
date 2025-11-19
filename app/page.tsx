@@ -1,6 +1,13 @@
 "use client";
+import { useState, useEffect, useMemo } from "react";
+// ...your other imports
+import {
+  getSubjectsForGrade,
+  getChaptersForGradeSubject,
+} from "../lib/syllabus";
 
 import React, { useState, useMemo } from "react";
+
 
 type Difficulty = "easy" | "medium" | "advanced" | "super_brain";
 type Grade = 7 | 8 | 9 | 10 | 11 | 12;
@@ -88,6 +95,49 @@ export default function HomePage() {
   const [stage, setStage] = useState<Stage>("setup");
 
   // Student profile selections
+// List of subjects for the chosen grade
+const subjectsForGrade = useMemo(
+  () => getSubjectsForGrade(grade),
+  [grade]
+);
+
+// List of chapters for chosen grade + subject
+const chaptersForSelection = useMemo(
+  () => getChaptersForGradeSubject(grade, subject),
+  [grade, subject]
+);
+
+// When grade changes, ensure subject is valid
+useEffect(() => {
+  const availableSubjects = getSubjectsForGrade(grade);
+  if (availableSubjects.length === 0) {
+    setSubject("");
+    setChapter("");
+    return;
+  }
+
+  // If current subject is not valid for this grade, set to first
+  if (!availableSubjects.includes(subject)) {
+    setSubject(availableSubjects[0]);
+    setChapter(""); // will be reset by next effect
+  }
+}, [grade]);
+
+// When subject changes, ensure chapter is valid
+useEffect(() => {
+  const availableChapters = getChaptersForGradeSubject(grade, subject);
+  if (availableChapters.length === 0) {
+    setChapter("");
+    return;
+  }
+
+  if (!availableChapters.includes(chapter)) {
+    setChapter(availableChapters[0]);
+  }
+}, [grade, subject]);
+
+
+  
   const [grade, setGrade] = useState<Grade>(8);
   const [subject, setSubject] = useState<Subject>("Maths");
   const [purpose, setPurpose] = useState<Purpose>("general");
@@ -382,71 +432,64 @@ const handleInstructorExplain = async (questionIndex: number) => {
 </div>
 
           
-          <label>
-            Class:
-            <select
-              value={grade}
-              onChange={(e) => setGrade(Number(e.target.value) as Grade)}
-              style={{ marginLeft: 8 }}
-            >
-              {GRADES.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-          </label>
+         {/* Class / Grade */}
+<label style={{ display: "block", marginBottom: 8 }}>
+  Class:
+  <select
+    value={grade}
+    onChange={(e) => setGrade(Number(e.target.value))}
+    style={{ marginLeft: 8 }}
+  >
+    {/* Only show grades you actually support right now */}
+    <option value={7}>Class 7</option>
+    <option value={8}>Class 8</option>
+    <option value={9}>Class 9</option>
+    {/* add 10, 11, 12 later when ready */}
+  </select>
+</label>
 
-          <label>
-            Subject:
-            <select
-              value={subject}
-              onChange={(e) =>
-                setSubject(e.target.value as Subject)
-              }
-              style={{ marginLeft: 8 }}
-            >
-              {SUBJECTS.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
+{/* Subject */}
+<label style={{ display: "block", marginBottom: 8 }}>
+  Subject:
+  <select
+    value={subject}
+    onChange={(e) => setSubject(e.target.value)}
+    style={{ marginLeft: 8 }}
+  >
+    {subjectsForGrade.length === 0 ? (
+      <option value="">No subjects configured</option>
+    ) : (
+      subjectsForGrade.map((subj) => (
+        <option key={subj} value={subj}>
+          {subj}
+        </option>
+      ))
+    )}
+  </select>
+</label>
 
-          <label>
-            Purpose:
-            <select
-              value={purpose}
-              onChange={(e) =>
-                setPurpose(e.target.value as Purpose)
-              }
-              style={{ marginLeft: 8 }}
-            >
-              {PURPOSES.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+{/* Chapter */}
+<label style={{ display: "block", marginBottom: 8 }}>
+  Chapter / Topic:
+  <select
+    value={chapter}
+    onChange={(e) => setChapter(e.target.value)}
+    style={{ marginLeft: 8, minWidth: 260 }}
+  >
+    {chaptersForSelection.length === 0 ? (
+      <option value="">
+        Select a subject to see chapters
+      </option>
+    ) : (
+      chaptersForSelection.map((ch) => (
+        <option key={ch} value={ch}>
+          {ch}
+        </option>
+      ))
+    )}
+  </select>
+</label>
 
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            Chapter / Topic:
-            <select
-              value={chapter}
-              onChange={(e) => setChapter(e.target.value)}
-              style={{ marginLeft: 8, minWidth: 250 }}
-            >
-              {availableChapters.map((ch) => (
-                <option key={ch} value={ch}>
-                  {ch}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
 
         <div style={{ marginBottom: 12 }}>
