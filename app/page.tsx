@@ -87,7 +87,9 @@ interface ExplanationState {
 
 export default function HomePage() {
   const [stage, setStage] = useState<Stage>("setup");
-
+const [grade, setGrade] = useState<number>(8);
+  const [subject, setSubject] = useState<string>("Maths");
+  const [chapter, setChapter] = useState<string>("");
   // Student profile selections
 // List of subjects for the chosen grade
 const subjectsForGrade = useMemo(
