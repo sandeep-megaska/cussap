@@ -94,6 +94,10 @@ export default function HomePage() {
  const [studentName, setStudentName] = useState<string>("");
 const [parentEmail, setParentEmail] = useState<string>("");
 const [savingSession, setSavingSession] = useState(false);
+  const [instructorLoading, setInstructorLoading] = useState(false);
+const [instructorExplanation, setInstructorExplanation] = useState<string | null>(null);
+const [instructorError, setInstructorError] = useState<string | null>(null);
+
 
   const [chapter, setChapter] = useState<string>("");
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
@@ -631,6 +635,42 @@ const [savingSession, setSavingSession] = useState(false);
             </div>
           );
         })}
+{/* Somewhere under the question & options in REVIEW stage */}
+<div style={{ marginTop: 12 }}>
+  <button
+    type="button"
+    onClick={() => handleInstructorExplain(currentIndex)}
+    disabled={instructorLoading}
+  >
+    {instructorLoading ? "AI Instructor is thinking..." : "Ask AI Instructor"}
+  </button>
+</div>
+
+{instructorError && (
+  <p style={{ color: "salmon", marginTop: 8 }}>
+    {instructorError}
+  </p>
+)}
+
+{instructorExplanation && (
+  <div
+    style={{
+      marginTop: 12,
+      padding: 10,
+      borderRadius: 8,
+      border: "1px solid rgba(148, 163, 184, 0.5)",
+      background: "rgba(15,23,42,0.85)",
+      fontSize: 14,
+      lineHeight: 1.5,
+      whiteSpace: "pre-wrap",
+    }}
+  >
+    <strong style={{ display: "block", marginBottom: 4 }}>
+      AI Instructor:
+    </strong>
+    {instructorExplanation}
+  </div>
+)}
 
         <button onClick={resetQuiz}>Back to new quiz</button>
       </main>
@@ -639,3 +679,45 @@ const [savingSession, setSavingSession] = useState(false);
 
   return null;
 }
+
+const handleInstructorExplain = async (questionIndex: number) => {
+  if (!questions[questionIndex]) return;
+
+  const q = questions[questionIndex];
+
+  setInstructorLoading(true);
+  setInstructorExplanation(null);
+  setInstructorError(null);
+
+  try {
+    const res = await fetch("/api/ai-instructor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        grade,
+        subject,
+        chapter,
+        difficulty,
+        question: q.question,
+        options: q.options,
+        correctIndex: q.correctIndex,
+        chosenIndex: answers[questionIndex],
+      }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to get explanation");
+    }
+
+    const data = await res.json();
+    setInstructorExplanation(data.explanation || "No explanation returned.");
+  } catch (err: any) {
+    console.error(err);
+    setInstructorError(
+      err.message || "Something went wrong while explaining."
+    );
+  } finally {
+    setInstructorLoading(false);
+  }
+};
