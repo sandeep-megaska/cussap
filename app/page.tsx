@@ -1,23 +1,73 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 type Difficulty = "easy" | "medium" | "advanced" | "super_brain";
+type Grade = 7 | 8 | 9 | 10 | 11 | 12;
+type Subject = "Maths" | "Science" | "Physics" | "Chemistry" | "Biology";
+
+type Purpose =
+  | "general"
+  | "board_cbse"
+  | "jee_main"
+  | "jee_advanced"
+  | "neet"
+  | "state_engineering"
+  | "olympiad";
 
 interface Question {
   id: string;
   question: string;
   options: string[];
   correctIndex: number;
-  explanation?: string; // from generator (optional)
+  explanation?: string; // optional from generator
   difficulty: Difficulty;
 }
 
-const CHAPTERS = [
-  "Rational Numbers",
-  "Linear Equations in One Variable",
-  "Squares and Square Roots",
+const GRADES: Grade[] = [7, 8, 9, 10, 11, 12];
+
+const SUBJECTS: Subject[] = [
+  "Maths",
+  "Science",
+  "Physics",
+  "Chemistry",
+  "Biology",
 ];
+
+const PURPOSES: { value: Purpose; label: string }[] = [
+  { value: "general", label: "General Practice" },
+  { value: "board_cbse", label: "CBSE Board Exam" },
+  { value: "jee_main", label: "JEE (Main)" },
+  { value: "jee_advanced", label: "JEE (Advanced)" },
+  { value: "neet", label: "NEET" },
+  { value: "state_engineering", label: "State Entrance (Engineering)" },
+  { value: "olympiad", label: "Olympiad / Talent Exam" },
+];
+
+// Very simple chapter mapping for now – you can expand this later easily.
+const CHAPTERS_BY_GRADE_SUBJECT: Record<string, string[]> = {
+  "8-Maths": [
+    "Rational Numbers",
+    "Linear Equations in One Variable",
+    "Squares and Square Roots",
+    "Cubes and Cube Roots",
+    "Comparing Quantities",
+    "Algebraic Expressions and Identities",
+  ],
+};
+
+function getChapters(grade: Grade, subject: Subject): string[] {
+  const key = `${grade}-${subject}`;
+  const specific = CHAPTERS_BY_GRADE_SUBJECT[key];
+  if (specific && specific.length > 0) return specific;
+
+  // Fallback generic options if we haven't customised that combo yet
+  return [
+    "Full Syllabus / Mixed Questions",
+    "Recent Topics Covered",
+    "Challenging Problems (All Chapters)",
+  ];
+}
 
 function calculateLevel(scorePercent: number): string {
   if (scorePercent >= 80) return "Super Brain";
@@ -36,6 +86,12 @@ interface ExplanationState {
 
 export default function HomePage() {
   const [stage, setStage] = useState<Stage>("setup");
+
+  // Student profile selections
+  const [grade, setGrade] = useState<Grade>(8);
+  const [subject, setSubject] = useState<Subject>("Maths");
+  const [purpose, setPurpose] = useState<Purpose>("general");
+
   const [chapter, setChapter] = useState<string>("");
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -48,6 +104,19 @@ export default function HomePage() {
   const [explanations, setExplanations] = useState<
     Record<string, ExplanationState>
   >({});
+
+  const availableChapters = useMemo(
+    () => getChapters(grade, subject),
+    [grade, subject]
+  );
+
+  // If chapter is empty or doesn't exist in new list (when grade/subject changes), reset it
+  React.useEffect(() => {
+    if (!availableChapters.includes(chapter)) {
+      setChapter(availableChapters[0] ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableChapters]);
 
   const startQuiz = async () => {
     if (!chapter) return;
@@ -62,6 +131,9 @@ export default function HomePage() {
           chapter,
           difficulty,
           count: 10, // increase to 25 later
+          grade,
+          subject,
+          purpose,
         }),
       });
 
@@ -143,6 +215,9 @@ export default function HomePage() {
           studentIndex: yourAnswerIndex,
           chapter,
           difficulty,
+          grade,
+          subject,
+          purpose,
         }),
       });
 
@@ -177,9 +252,11 @@ export default function HomePage() {
 
   if (stage === "setup") {
     return (
-      <main style={{ maxWidth: 600, margin: "0 auto", padding: 16 }}>
-        <h1>Class 8 Maths – Smart Chapter Quiz</h1>
-        <p>Choose a chapter and difficulty to test your understanding.</p>
+      <main style={{ maxWidth: 700, margin: "0 auto", padding: 16 }}>
+        <h1>Smart CBSE Practice – AI Quiz</h1>
+        <p>
+          Choose your class, subject, and goal to get a customised quiz.
+        </p>
 
         {error && (
           <p style={{ color: "red" }}>
@@ -187,16 +264,73 @@ export default function HomePage() {
           </p>
         )}
 
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
+          <label>
+            Class:
+            <select
+              value={grade}
+              onChange={(e) => setGrade(Number(e.target.value) as Grade)}
+              style={{ marginLeft: 8 }}
+            >
+              {GRADES.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Subject:
+            <select
+              value={subject}
+              onChange={(e) =>
+                setSubject(e.target.value as Subject)
+              }
+              style={{ marginLeft: 8 }}
+            >
+              {SUBJECTS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Purpose:
+            <select
+              value={purpose}
+              onChange={(e) =>
+                setPurpose(e.target.value as Purpose)
+              }
+              style={{ marginLeft: 8 }}
+            >
+              {PURPOSES.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         <div style={{ marginBottom: 12 }}>
           <label>
-            Chapter:
+            Chapter / Topic:
             <select
               value={chapter}
               onChange={(e) => setChapter(e.target.value)}
-              style={{ marginLeft: 8 }}
+              style={{ marginLeft: 8, minWidth: 250 }}
             >
-              <option value="">-- Choose --</option>
-              {CHAPTERS.map((ch) => (
+              {availableChapters.map((ch) => (
                 <option key={ch} value={ch}>
                   {ch}
                 </option>
@@ -223,7 +357,11 @@ export default function HomePage() {
           </label>
         </div>
 
-        <button onClick={startQuiz} disabled={!chapter}>
+        <button
+          onClick={startQuiz}
+          disabled={!chapter}
+          style={{ marginTop: 8 }}
+        >
           Start Quiz
         </button>
       </main>
@@ -233,8 +371,15 @@ export default function HomePage() {
   if (stage === "loading") {
     return (
       <main style={{ maxWidth: 600, margin: "0 auto", padding: 16 }}>
-        <h2>Generating questions...</h2>
-        <p>Please wait a moment while we prepare your quiz.</p>
+        <h2>Preparing your quiz…</h2>
+        <p>
+          Class {grade} – {subject} –{" "}
+          {
+            PURPOSES.find((p) => p.value === purpose)?.label ??
+            "Practice"
+          }
+        </p>
+        <p>Please wait a moment while we generate questions.</p>
       </main>
     );
   }
@@ -246,11 +391,16 @@ export default function HomePage() {
     return (
       <main style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
         <h2>
-          {chapter} – Question {currentIndex + 1} /{" "}
+          Class {grade} {subject} – Q{currentIndex + 1} /{" "}
           {questions.length}
         </h2>
         <p>
-          <strong>Difficulty:</strong> {difficulty}
+          <strong>Goal:</strong>{" "}
+          {
+            PURPOSES.find((p) => p.value === purpose)?.label ??
+            "Practice"
+          }{" "}
+          | <strong>Difficulty:</strong> {difficulty}
         </p>
         <p style={{ marginTop: 16 }}>{q.question}</p>
 
@@ -286,8 +436,21 @@ export default function HomePage() {
 
   if (stage === "result") {
     return (
-      <main style={{ maxWidth: 600, margin: "0 auto", padding: 16 }}>
+      <main style={{ maxWidth: 650, margin: "0 auto", padding: 16 }}>
         <h1>Quiz Result</h1>
+        <p>
+          <strong>Class:</strong> {grade}
+        </p>
+        <p>
+          <strong>Subject:</strong> {subject}
+        </p>
+        <p>
+          <strong>Goal:</strong>{" "}
+          {
+            PURPOSES.find((p) => p.value === purpose)?.label ??
+            "Practice"
+          }
+        </p>
         <p>
           <strong>Chapter:</strong> {chapter}
         </p>
@@ -318,6 +481,13 @@ export default function HomePage() {
       <main style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
         <h1>Review & Learn</h1>
         <p>
+          Class {grade} – {subject} –{" "}
+          {
+            PURPOSES.find((p) => p.value === purpose)?.label ??
+            "Practice"
+          }
+        </p>
+        <p>
           We’ll show you the questions you got wrong, with correct
           answers and explanations.
         </p>
@@ -325,7 +495,7 @@ export default function HomePage() {
         {wrongQuestions.length === 0 && (
           <p>
             Amazing! You got everything right. Try a harder difficulty
-            next time.
+            or a tougher exam goal next time.
           </p>
         )}
 
@@ -362,14 +532,12 @@ export default function HomePage() {
                 {q.options[q.correctIndex]}
               </p>
 
-              {/* Existing static explanation from generator, if any */}
               {q.explanation && (
                 <p style={{ marginTop: 8 }}>
                   <strong>Basic explanation:</strong> {q.explanation}
                 </p>
               )}
 
-              {/* AI-powered explanation button */}
               <div style={{ marginTop: 8 }}>
                 <button
                   onClick={() =>
@@ -383,7 +551,6 @@ export default function HomePage() {
                 </button>
               </div>
 
-              {/* Show AI explanation or error */}
               {explanationState?.error && (
                 <p style={{ color: "red", marginTop: 8 }}>
                   {explanationState.error}
