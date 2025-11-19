@@ -390,86 +390,86 @@ export default function HomePage() {
 
         {/* Core selection grid */}
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 12,
-            marginBottom: 16,
-          }}
-        >
-          {/* Class / Grade */}
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Class:
-            <select
-              value={grade}
-              onChange={(e) => setGrade(Number(e.target.value) as Grade)}
-              style={{ marginLeft: 8 }}
-            >
-              <option value={7}>Class 7</option>
-              <option value={8}>Class 8</option>
-              <option value={9}>Class 9</option>
-              <option value={10}>Class 10</option>
-              <option value={11}>Class 11</option>
-              <option value={12}>Class 12</option>
-            </select>
-          </label>
+  style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 12,
+    marginBottom: 16,
+  }}
+>
+  {/* Class / Grade */}
+  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+    Class:
+    <select
+      value={grade}
+      onChange={(e) => setGrade(Number(e.target.value) as Grade)}
+      style={{ width: "100%" }}
+    >
+      <option value={7}>Class 7</option>
+      <option value={8}>Class 8</option>
+      <option value={9}>Class 9</option>
+      <option value={10}>Class 10</option>
+      <option value={11}>Class 11</option>
+      <option value={12}>Class 12</option>
+    </select>
+  </label>
 
-          {/* Subject */}
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Subject:
-            <select
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              style={{ marginLeft: 8 }}
-            >
-              {subjectsForGrade.length === 0 ? (
-                <option value="">No subjects configured</option>
-              ) : (
-                subjectsForGrade.map((subj) => (
-                  <option key={subj} value={subj}>
-                    {subj}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
+  {/* Subject */}
+  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+    Subject:
+    <select
+      value={subject}
+      onChange={(e) => setSubject(e.target.value)}
+      style={{ width: "100%" }}
+    >
+      {subjectsForGrade.length === 0 ? (
+        <option value="">No subjects configured</option>
+      ) : (
+        subjectsForGrade.map((subj) => (
+          <option key={subj} value={subj}>
+            {subj}
+          </option>
+        ))
+      )}
+    </select>
+  </label>
 
-          {/* Chapter */}
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Chapter / Topic:
-            <select
-              value={chapter}
-              onChange={(e) => setChapter(e.target.value)}
-              style={{ marginLeft: 8, minWidth: 260 }}
-            >
-              {chaptersForSelection.length === 0 ? (
-                <option value="">Select a subject to see chapters</option>
-              ) : (
-                chaptersForSelection.map((ch) => (
-                  <option key={ch} value={ch}>
-                    {ch}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
+  {/* Chapter */}
+  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+    Chapter / Topic:
+    <select
+      value={chapter}
+      onChange={(e) => setChapter(e.target.value)}
+      style={{ width: "100%" }}
+    >
+      {chaptersForSelection.length === 0 ? (
+        <option value="">Select a subject to see chapters</option>
+      ) : (
+        chaptersForSelection.map((ch) => (
+          <option key={ch} value={ch}>
+            {ch}
+          </option>
+        ))
+      )}
+    </select>
+  </label>
 
-          {/* Purpose / Goal */}
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Goal:
-            <select
-              value={purpose}
-              onChange={(e) => setPurpose(e.target.value as Purpose)}
-              style={{ marginLeft: 8 }}
-            >
-              {PURPOSES.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+  {/* Purpose / Goal */}
+  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+    Goal:
+    <select
+      value={purpose}
+      onChange={(e) => setPurpose(e.target.value as Purpose)}
+      style={{ width: "100%" }}
+    >
+      {PURPOSES.map((p) => (
+        <option key={p.value} value={p.value}>
+          {p.label}
+        </option>
+      ))}
+    </select>
+  </label>
+</div>
 
         {/* Difficulty */}
         <div style={{ marginBottom: 12 }}>
