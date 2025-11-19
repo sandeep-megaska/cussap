@@ -45,13 +45,14 @@ export async function POST(req: NextRequest) {
     let studentId: string | null = null;
 
     if (studentName && studentName.trim().length > 0) {
-      const { data: existingStudent, error: findError } = await supabase
-        .from("edtech.students")
-        .select("id")
-        .eq("name", studentName.trim())
-        .eq("parent_email", parentEmail || null)
-        .limit(1)
-        .maybeSingle();
+      const { data: newStudent, error: insertError } = await supabase
+  .from("students")
+  .insert({
+    name: studentName.trim(),
+    parent_email: parentEmail || null,
+  })
+  .select("id")
+  .single();
 
       if (findError) {
         console.error("Error finding student:", findError);
@@ -84,21 +85,20 @@ export async function POST(req: NextRequest) {
     }, 0);
 
     const { data: session, error: sessionError } = await supabase
-      .from("edtech.quiz_sessions")
-      .insert({
-        student_id: studentId,
-        grade,
-        subject,
-        purpose,
-        chapter,
-        difficulty,
-        total_questions: totalQuestions,
-        correct_answers: correctAnswers,
-        score_percent: scorePercent,
-      })
-      .select("id")
-      .single();
-
+  .from("quiz_sessions")
+  .insert({
+    student_id: studentId,
+    grade,
+    subject,
+    purpose,
+    chapter,
+    difficulty,
+    total_questions: totalQuestions,
+    correct_answers: correctAnswers,
+    score_percent: scorePercent,
+  })
+  .select("id")
+  .single();
     if (sessionError) {
       console.error("Error inserting session:", sessionError);
       return NextResponse.json(
@@ -120,8 +120,8 @@ export async function POST(req: NextRequest) {
     }));
 
     const { error: answersError } = await supabase
-      .from("edtech.quiz_answers")
-      .insert(answerRows);
+  .from("quiz_answers")
+  .insert(answerRows);
 
     if (answersError) {
       console.error("Error inserting answers:", answersError);
