@@ -9,7 +9,7 @@ interface Question {
   question: string;
   options: string[];
   correctIndex: number;
-  explanation: string;
+  explanation?: string; // from generator (optional)
   difficulty: Difficulty;
 }
 
@@ -28,6 +28,12 @@ function calculateLevel(scorePercent: number): string {
 
 type Stage = "setup" | "loading" | "quiz" | "result" | "review";
 
+interface ExplanationState {
+  text?: string;
+  loading: boolean;
+  error?: string;
+}
+
 export default function HomePage() {
   const [stage, setStage] = useState<Stage>("setup");
   const [chapter, setChapter] = useState<string>("");
@@ -37,6 +43,11 @@ export default function HomePage() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [scorePercent, setScorePercent] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  // question.id -> explanation state
+  const [explanations, setExplanations] = useState<
+    Record<string, ExplanationState>
+  >({});
 
   const startQuiz = async () => {
     if (!chapter) return;
@@ -50,7 +61,7 @@ export default function HomePage() {
         body: JSON.stringify({
           chapter,
           difficulty,
-          count: 10, // you can make 25 once stable
+          count: 10, // increase to 25 later
         }),
       });
 
@@ -65,6 +76,7 @@ export default function HomePage() {
       setAnswers(Array(qs.length).fill(-1));
       setCurrentIndex(0);
       setStage("quiz");
+      setExplanations({});
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Something went wrong");
@@ -103,19 +115,71 @@ export default function HomePage() {
     setAnswers([]);
     setScorePercent(0);
     setStage("setup");
+    setExplanations({});
   };
 
   const level = calculateLevel(scorePercent);
 
-  // --- RENDER ---
+  // ---- AI explanation handler ----
+
+  const requestExplanation = async (q: Question, yourAnswerIndex: number) => {
+    setExplanations((prev) => ({
+      ...prev,
+      [q.id]: {
+        loading: true,
+        text: prev[q.id]?.text,
+        error: undefined,
+      },
+    }));
+
+    try {
+      const res = await fetch("/api/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+          studentIndex: yourAnswerIndex,
+          chapter,
+          difficulty,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to get explanation");
+      }
+
+      const data = await res.json();
+
+      setExplanations((prev) => ({
+        ...prev,
+        [q.id]: {
+          loading: false,
+          text: data.explanation,
+        },
+      }));
+    } catch (err: any) {
+      console.error(err);
+      setExplanations((prev) => ({
+        ...prev,
+        [q.id]: {
+          loading: false,
+          text: prev[q.id]?.text,
+          error: err.message || "Error getting explanation",
+        },
+      }));
+    }
+  };
+
+  // ---- RENDER ----
 
   if (stage === "setup") {
     return (
       <main style={{ maxWidth: 600, margin: "0 auto", padding: 16 }}>
         <h1>Class 8 Maths – Smart Chapter Quiz</h1>
-        <p>
-          Choose a chapter and difficulty to test your understanding.
-        </p>
+        <p>Choose a chapter and difficulty to test your understanding.</p>
 
         {error && (
           <p style={{ color: "red" }}>
@@ -159,10 +223,7 @@ export default function HomePage() {
           </label>
         </div>
 
-        <button
-          onClick={startQuiz}
-          disabled={!chapter}
-        >
+        <button onClick={startQuiz} disabled={!chapter}>
           Start Quiz
         </button>
       </main>
@@ -185,7 +246,8 @@ export default function HomePage() {
     return (
       <main style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
         <h2>
-          {chapter} – Question {currentIndex + 1} / {questions.length}
+          {chapter} – Question {currentIndex + 1} /{" "}
+          {questions.length}
         </h2>
         <p>
           <strong>Difficulty:</strong> {difficulty}
@@ -267,11 +329,12 @@ export default function HomePage() {
           </p>
         )}
 
-        {wrongQuestions.map((q, idx) => {
+        {wrongQuestions.map((q) => {
           const originalIndex = questions.findIndex(
             (qq) => qq.id === q.id
           );
           const yourAnswerIndex = answers[originalIndex];
+          const explanationState = explanations[q.id];
 
           return (
             <div
@@ -298,9 +361,41 @@ export default function HomePage() {
                 <strong>Correct answer:</strong>{" "}
                 {q.options[q.correctIndex]}
               </p>
-              <p style={{ marginTop: 8 }}>
-                <strong>Explanation:</strong> {q.explanation}
-              </p>
+
+              {/* Existing static explanation from generator, if any */}
+              {q.explanation && (
+                <p style={{ marginTop: 8 }}>
+                  <strong>Basic explanation:</strong> {q.explanation}
+                </p>
+              )}
+
+              {/* AI-powered explanation button */}
+              <div style={{ marginTop: 8 }}>
+                <button
+                  onClick={() =>
+                    requestExplanation(q, yourAnswerIndex)
+                  }
+                  disabled={explanationState?.loading}
+                >
+                  {explanationState?.loading
+                    ? "Explaining..."
+                    : "Explain this question"}
+                </button>
+              </div>
+
+              {/* Show AI explanation or error */}
+              {explanationState?.error && (
+                <p style={{ color: "red", marginTop: 8 }}>
+                  {explanationState.error}
+                </p>
+              )}
+
+              {explanationState?.text && (
+                <p style={{ marginTop: 8 }}>
+                  <strong>AI Explanation:</strong>{" "}
+                  {explanationState.text}
+                </p>
+              )}
             </div>
           );
         })}
