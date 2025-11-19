@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-iimport { supabase } from "../../../lib/supabaseClient";
-
+import { supabase } from "../../../lib/supabaseClient";
 
 export async function POST(req: NextRequest) {
   try {
@@ -126,7 +125,6 @@ export async function POST(req: NextRequest) {
 
     if (answersError) {
       console.error("Error inserting answers:", answersError);
-      // We still return 200 because session is saved; answers are optional
       return NextResponse.json({
         ok: true,
         sessionId,
