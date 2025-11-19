@@ -284,7 +284,8 @@ export const SYLLABUS: Record<number, Record<string, string[]>> = {
     "Electromagnetic Induction",
     "Alternating Current",
     "Electromagnetic Waves
-
+ ],
+}
 };
 
 export function getSubjectsForGrade(grade: number): string[] {
