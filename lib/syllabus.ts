@@ -283,7 +283,7 @@ export const SYLLABUS: Record<number, Record<string, string[]>> = {
     "Magnetism and Matter",
     "Electromagnetic Induction",
     "Alternating Current",
-    "Electromagnetic Waves
+    "Electromagnetic Waves",
  ],
 }
 };
