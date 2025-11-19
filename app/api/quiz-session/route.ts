@@ -46,8 +46,7 @@ export async function POST(req: NextRequest) {
 
     if (studentName && studentName.trim().length > 0) {
       const { data: existingStudent, error: findError } = await supabase
-  .from("edtech.quiz_sessions")
-
+        .from("edtech.students")
         .select("id")
         .eq("name", studentName.trim())
         .eq("parent_email", parentEmail || null)
@@ -62,9 +61,7 @@ export async function POST(req: NextRequest) {
         studentId = existingStudent.id;
       } else {
         const { data: newStudent, error: insertError } = await supabase
-  .from("edtech.students")
-
-
+          .from("edtech.students")
           .insert({
             name: studentName.trim(),
             parent_email: parentEmail || null,
@@ -86,9 +83,8 @@ export async function POST(req: NextRequest) {
       return acc + (answers[idx] === q.correctIndex ? 1 : 0);
     }, 0);
 
-    const { data: session, error: sessionError } = await .from("edtech.quiz_sessions")
-
-
+    const { data: session, error: sessionError } = await supabase
+      .from("edtech.quiz_sessions")
       .insert({
         student_id: studentId,
         grade,
@@ -124,13 +120,12 @@ export async function POST(req: NextRequest) {
     }));
 
     const { error: answersError } = await supabase
-  .from("edtech.quiz_answers")
-
-
+      .from("edtech.quiz_answers")
       .insert(answerRows);
 
     if (answersError) {
       console.error("Error inserting answers:", answersError);
+      // We still return 200 because session is saved; answers are optional
       return NextResponse.json({
         ok: true,
         sessionId,
