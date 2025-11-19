@@ -46,8 +46,7 @@ export async function POST(req: NextRequest) {
 
     if (studentName && studentName.trim().length > 0) {
       const { data: existingStudent, error: findError } = await supabase
-  .schema("edtech")
-  .from("students")
+  .from("edtech.quiz_sessions")
 
         .select("id")
         .eq("name", studentName.trim())
@@ -63,8 +62,8 @@ export async function POST(req: NextRequest) {
         studentId = existingStudent.id;
       } else {
         const { data: newStudent, error: insertError } = await supabase
-  .schema("edtech")
-  .from("students")
+  .from("edtech.students")
+
 
           .insert({
             name: studentName.trim(),
@@ -87,9 +86,8 @@ export async function POST(req: NextRequest) {
       return acc + (answers[idx] === q.correctIndex ? 1 : 0);
     }, 0);
 
-    const { data: session, error: sessionError } = await supabase
-  .schema("edtech")
-  .from("quiz_sessions")
+    const { data: session, error: sessionError } = await .from("edtech.quiz_sessions")
+
 
       .insert({
         student_id: studentId,
@@ -126,8 +124,8 @@ export async function POST(req: NextRequest) {
     }));
 
     const { error: answersError } = await supabase
-  .schema("edtech")
-  .from("quiz_answers")
+  .from("edtech.quiz_answers")
+
 
       .insert(answerRows);
 
