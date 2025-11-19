@@ -32,28 +32,25 @@ async function fetchSessions(): Promise<{
   error?: string;
 }> {
   // We get last 100 sessions, newest first
-  const { data, error } = await supabase
-  .schema("edtech")
+ const { data, error } = await supabase
   .from("quiz_sessions")
-    .select(
-      `
-      id,
-      grade,
-      subject,
-      purpose,
-      chapter,
-      difficulty,
-      total_questions,
-      correct_answers,
-      score_percent,
-      completed_at,
-      students:student_id (
-        name,
-        parent_email
-      )
-    `
+  .select(`
+    id,
+    grade,
+    subject,
+    purpose,
+    chapter,
+    difficulty,
+    total_questions,
+    correct_answers,
+    score_percent,
+    completed_at,
+    students:student_id (
+      name,
+      parent_email
     )
-    .order("completed_at", { ascending: false })
+  `)
+     .order("completed_at", { ascending: false })
     .limit(100);
 
   if (error) {
