@@ -6,7 +6,6 @@ import {
   getChaptersForGradeSubject,
 } from "../../lib/syllabus";
 
-
 type Difficulty = "easy" | "medium" | "advanced" | "super_brain";
 type Grade = 7 | 8 | 9 | 10 | 11 | 12;
 
@@ -36,8 +35,6 @@ interface ExplanationState {
   error?: string;
 }
 
-const GRADES: Grade[] = [7, 8, 9, 10, 11, 12];
-
 const PURPOSES: { value: Purpose; label: string }[] = [
   { value: "general", label: "General Practice" },
   { value: "board_cbse", label: "CBSE Board Exam" },
@@ -55,9 +52,8 @@ function calculateLevel(scorePercent: number): string {
   return "Needs Foundation (Easy)";
 }
 
-export default functionStudentPage() {
+export default function StudentPage() {
   const [stage, setStage] = useState<Stage>("setup");
-
 
   // Core selections
   const [grade, setGrade] = useState<Grade>(8);
@@ -79,12 +75,12 @@ export default functionStudentPage() {
   const [scorePercent, setScorePercent] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // Per-question AI explanation (Explain this question)
+  // Per-question AI explanation
   const [explanations, setExplanations] = useState<
     Record<string, ExplanationState>
   >({});
 
-  // AI Instructor (global per current question)
+  // AI Instructor (global for current question in review)
   const [instructorLoading, setInstructorLoading] = useState(false);
   const [instructorExplanation, setInstructorExplanation] =
     useState<string | null>(null);
@@ -102,7 +98,7 @@ export default functionStudentPage() {
     [grade, subject]
   );
 
-  // Ensure subject is valid for grade
+  // Ensure subject valid for grade
   useEffect(() => {
     const availableSubjects = getSubjectsForGrade(grade);
     if (availableSubjects.length === 0) {
@@ -116,7 +112,7 @@ export default functionStudentPage() {
     }
   }, [grade]);
 
-  // Ensure chapter is valid for (grade, subject)
+  // Ensure chapter valid for (grade, subject)
   useEffect(() => {
     const availableChapters = getChaptersForGradeSubject(grade, subject);
     if (availableChapters.length === 0) {
@@ -128,7 +124,7 @@ export default functionStudentPage() {
     }
   }, [grade, subject]);
 
-  // Reset AI Instructor explanation when moving between questions
+  // Reset AI Instructor when question index changes
   useEffect(() => {
     setInstructorExplanation(null);
     setInstructorError(null);
@@ -149,7 +145,7 @@ export default functionStudentPage() {
         body: JSON.stringify({
           chapter,
           difficulty,
-          count: 10, // 10 for now; can increase later
+          count: 10, // 10 for now
           grade,
           subject,
           purpose,
@@ -163,6 +159,7 @@ export default functionStudentPage() {
 
       const data = await res.json();
       const qs: Question[] = data.questions;
+
       setQuestions(qs);
       setAnswers(Array(qs.length).fill(-1));
       setCurrentIndex(0);
@@ -241,7 +238,7 @@ export default functionStudentPage() {
 
   const level = calculateLevel(scorePercent);
 
-  // ----- AI: Explain question (per-question text) -----
+  // ----- AI: per-question explanation -----
 
   const requestExplanation = async (
     q: Question,
@@ -300,7 +297,7 @@ export default functionStudentPage() {
     }
   };
 
-  // ----- AI Instructor: “Explain like a teacher” -----
+  // ----- AI Instructor: teacher-style explanation -----
 
   const handleInstructorExplain = async (questionIndex: number) => {
     if (!questions[questionIndex]) return;
@@ -333,7 +330,9 @@ export default functionStudentPage() {
       }
 
       const data = await res.json();
-      setInstructorExplanation(data.explanation || "No explanation returned.");
+      setInstructorExplanation(
+        data.explanation || "No explanation returned."
+      );
     } catch (err: any) {
       console.error(err);
       setInstructorError(
@@ -374,7 +373,11 @@ export default functionStudentPage() {
               value={studentName}
               onChange={(e) => setStudentName(e.target.value)}
               placeholder="Optional"
-              style={{ display: "block", width: "80%", marginTop: 4 }}
+              style={{
+                display: "block",
+                width: "100%",
+                marginTop: 4,
+              }}
             />
           </label>
 
@@ -385,106 +388,144 @@ export default functionStudentPage() {
               value={parentEmail}
               onChange={(e) => setParentEmail(e.target.value)}
               placeholder="for progress reports"
-              style={{ display: "block", width: "80%", marginTop: 4 }}
+              style={{
+                display: "block",
+                width: "100%",
+                marginTop: 4,
+              }}
             />
           </label>
         </div>
 
         {/* Core selection grid */}
         <div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: 12,
-    marginBottom: 16,
-  }}
->
-  {/* Class / Grade */}
-  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-    Class:
-    <select
-      value={grade}
-      onChange={(e) => setGrade(Number(e.target.value) as Grade)}
-      style={{ width: "100%" }}
-    >
-      <option value={7}>Class 7</option>
-      <option value={8}>Class 8</option>
-      <option value={9}>Class 9</option>
-      <option value={10}>Class 10</option>
-      <option value={11}>Class 11</option>
-      <option value={12}>Class 12</option>
-    </select>
-  </label>
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
+          {/* Class / Grade */}
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            Class:
+            <select
+              value={grade}
+              onChange={(e) =>
+                setGrade(Number(e.target.value) as Grade)
+              }
+              style={{ width: "100%" }}
+            >
+              <option value={7}>Class 7</option>
+              <option value={8}>Class 8</option>
+              <option value={9}>Class 9</option>
+              <option value={10}>Class 10</option>
+              <option value={11}>Class 11</option>
+              <option value={12}>Class 12</option>
+            </select>
+          </label>
 
-  {/* Subject */}
-  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-    Subject:
-    <select
-      value={subject}
-      onChange={(e) => setSubject(e.target.value)}
-      style={{ width: "100%" }}
-    >
-      {subjectsForGrade.length === 0 ? (
-        <option value="">No subjects configured</option>
-      ) : (
-        subjectsForGrade.map((subj) => (
-          <option key={subj} value={subj}>
-            {subj}
-          </option>
-        ))
-      )}
-    </select>
-  </label>
+          {/* Subject */}
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            Subject:
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              style={{ width: "100%" }}
+            >
+              {subjectsForGrade.length === 0 ? (
+                <option value="">No subjects configured</option>
+              ) : (
+                subjectsForGrade.map((subj) => (
+                  <option key={subj} value={subj}>
+                    {subj}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
 
-  {/* Chapter */}
-  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-    Chapter / Topic:
-    <select
-      value={chapter}
-      onChange={(e) => setChapter(e.target.value)}
-      style={{ width: "100%" }}
-    >
-      {chaptersForSelection.length === 0 ? (
-        <option value="">Select a subject to see chapters</option>
-      ) : (
-        chaptersForSelection.map((ch) => (
-          <option key={ch} value={ch}>
-            {ch}
-          </option>
-        ))
-      )}
-    </select>
-  </label>
+          {/* Chapter */}
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            Chapter / Topic:
+            <select
+              value={chapter}
+              onChange={(e) => setChapter(e.target.value)}
+              style={{ width: "100%" }}
+            >
+              {chaptersForSelection.length === 0 ? (
+                <option value="">
+                  Select a subject to see chapters
+                </option>
+              ) : (
+                chaptersForSelection.map((ch) => (
+                  <option key={ch} value={ch}>
+                    {ch}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
 
-  {/* Purpose / Goal */}
-  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-    Goal:
-    <select
-      value={purpose}
-      onChange={(e) => setPurpose(e.target.value as Purpose)}
-      style={{ width: "100%" }}
-    >
-      {PURPOSES.map((p) => (
-        <option key={p.value} value={p.value}>
-          {p.label}
-        </option>
-      ))}
-    </select>
-  </label>
-
-
-</div>
+          {/* Purpose / Goal */}
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            Goal:
+            <select
+              value={purpose}
+              onChange={(e) =>
+                setPurpose(e.target.value as Purpose)
+              }
+              style={{ width: "100%" }}
+            >
+              {PURPOSES.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         {/* Difficulty */}
         <div style={{ marginBottom: 12 }}>
-          <label>
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              maxWidth: 220,
+            }}
+          >
             Difficulty:
             <select
               value={difficulty}
               onChange={(e) =>
                 setDifficulty(e.target.value as Difficulty)
               }
-              style={{ marginLeft: 8 }}
             >
               <option value="easy">Easy</option>
               <option value="medium">Medium</option>
@@ -492,8 +533,6 @@ export default functionStudentPage() {
               <option value="super_brain">Super Brain</option>
             </select>
           </label>
-                    {/* Smart free-text intent (optional) */}
-
         </div>
 
         <button
@@ -513,7 +552,8 @@ export default functionStudentPage() {
         <h2>Preparing your quiz…</h2>
         <p>
           Class {grade} – {subject} –{" "}
-          {PURPOSES.find((p) => p.value === purpose)?.label ?? "Practice"}
+          {PURPOSES.find((p) => p.value === purpose)?.label ??
+            "Practice"}
         </p>
         <p>Please wait a moment while we generate questions.</p>
       </main>
@@ -617,8 +657,8 @@ export default functionStudentPage() {
             "Practice"}
         </p>
         <p>
-          We’ll show you the questions you got wrong, with correct answers and
-          explanations.
+          We’ll show you the questions you got wrong, with correct answers
+          and explanations.
         </p>
 
         {wrongQuestions.length === 0 && (
@@ -667,7 +707,14 @@ export default functionStudentPage() {
                 </p>
               )}
 
-              <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+              <div
+                style={{
+                  marginTop: 8,
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
                 <button
                   onClick={() =>
                     requestExplanation(q, yourAnswerIndex)
@@ -681,7 +728,9 @@ export default functionStudentPage() {
 
                 <button
                   type="button"
-                  onClick={() => handleInstructorExplain(originalIndex)}
+                  onClick={() =>
+                    handleInstructorExplain(originalIndex)
+                  }
                   disabled={instructorLoading}
                 >
                   {instructorLoading
