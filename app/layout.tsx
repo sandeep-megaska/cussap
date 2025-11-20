@@ -18,10 +18,10 @@ export default function RootLayout({
        
      
 
-       //<div className="app-main">
+      
           {/* All page content (quiz, dashboards, portals) renders here */}
           {children}
-       // </div>
+       
 
        
       </body>
