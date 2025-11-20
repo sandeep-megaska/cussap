@@ -6,11 +6,18 @@ const client = new OpenAI({
 });
 
 const ALLOWED_GRADES = [7, 8, 9, 10, 11, 12];
-const ALLOWED_SUBJECTS = ["Maths", "Physics", "Chemistry", "Biology", "General Science"];
+const ALLOWED_SUBJECTS = [
+  "Maths",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "General Science",
+];
 
 export async function POST(req: NextRequest) {
   try {
-    const { text } = (await req.json()) as { text?: string };
+    const body = await req.json().catch(() => null);
+    const text = body?.text as string | undefined;
 
     if (!text || !text.trim()) {
       return NextResponse.json(
@@ -29,31 +36,35 @@ for example: "I'm in 8th and I want to practice sound" or
 Your job is to infer:
 - grade: one of [7,8,9,10,11,12] or null if uncertain
 - subject: one of ["Maths","Physics","Chemistry","Biology","General Science"] or null if uncertain
-- chapter: a short human-readable chapter/topic name (CBSE / NCERT style) or null if unclear.
+- chapter: a short human-readable chapter/topic name (NCERT/CBSE style) or null if unclear.
 
 Return ONLY a JSON object, nothing else, in this exact shape:
 {"grade": number | null, "subject": string | null, "chapter": string | null}
-`;
+`.trim();
 
     const userPrompt = `Text: """${text.trim()}"""`;
 
-    // TypeScript in this SDK version doesn't know about "responses" yet,
-// but the runtime supports it. Safely bypass the type error.
-const response = await (client as any).responses.create({
-  model: "gpt-4.1-mini",
-  input: [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt },
-  ],
-  response_format: { type: "json_object" },
-});
+    // NOTE: SDK typings don't know about "responses" yet, but runtime does.
+    const response = await (client as any).responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" },
+    });
 
+    // Be defensive about the shape of the response
+    const raw =
+      (response as any).output_text ??
+      (response as any).output?.[0]?.content?.[0]?.text ??
+      "{}";
 
-    const content = response.output[0].content[0].text || "{}";
     let parsed: any;
     try {
-      parsed = JSON.parse(content);
-    } catch {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      console.error("Failed to JSON.parse interpret-intent output:", raw);
       parsed = {};
     }
 
@@ -61,20 +72,41 @@ const response = await (client as any).responses.create({
     let subject = parsed?.subject ?? null;
     let chapter = parsed?.chapter ?? null;
 
-    // Basic safety checks
-    if (!ALLOWED_GRADES.includes(grade)) grade = null;
+    // Normalise subject string (trim/capitalise basic)
     if (typeof subject === "string") {
-      if (!ALLOWED_SUBJECTS.includes(subject)) subject = null;
-    } else {
+      subject = subject.trim();
+      // Simple normalisation for common variants
+      const map: Record<string, string> = {
+        maths: "Maths",
+        math: "Maths",
+        mathematics: "Maths",
+        physics: "Physics",
+        chemistry: "Chemistry",
+        bio: "Biology",
+        biology: "Biology",
+        science: "General Science",
+        "general science": "General Science",
+      };
+      const key = subject.toLowerCase();
+      subject = map[key] ?? subject;
+    }
+
+    // Validate grade & subject
+    if (!ALLOWED_GRADES.includes(grade)) grade = null;
+    if (typeof subject !== "string" || !ALLOWED_SUBJECTS.includes(subject)) {
       subject = null;
     }
-    if (typeof chapter !== "string") chapter = null;
+    if (typeof chapter !== "string" || !chapter.trim()) {
+      chapter = null;
+    } else {
+      chapter = chapter.trim();
+    }
 
     return NextResponse.json({ grade, subject, chapter });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error in /api/interpret-intent:", err);
     return NextResponse.json(
-      { error: "Server error" },
+      { error: err?.message || "Server error" },
       { status: 500 }
     );
   }
