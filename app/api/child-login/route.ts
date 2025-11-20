@@ -9,24 +9,28 @@ function hashPassword(pw: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { username, password } = body as {
-      username: string;
-      password: string;
-    };
+    const {
+      username,
+      password,
+      parentEmail,
+    }: { username: string; password: string; parentEmail: string } = body;
 
-    if (!username || !password) {
+    if (!username || !password || !parentEmail) {
       return NextResponse.json(
-        { error: "Username and password are required" },
+        { error: "Username, password and parent email are required" },
         { status: 400 }
       );
     }
 
     const cleanUsername = username.trim().toLowerCase();
+    const cleanParentEmail = parentEmail.trim().toLowerCase();
 
+    // 1) Look up child with BOTH username + parent_email
     const { data, error } = await supabase
       .from("child_accounts")
       .select("id, username, child_name, parent_email, password_hash")
       .eq("username", cleanUsername)
+      .ilike("parent_email", cleanParentEmail)
       .maybeSingle();
 
     if (error) {
@@ -39,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     if (!data) {
       return NextResponse.json(
-        { error: "Invalid username or password" },
+        { error: "Invalid username, parent email, or password" },
         { status: 400 }
       );
     }
@@ -48,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     if (incomingHash !== data.password_hash) {
       return NextResponse.json(
-        { error: "Invalid username or password" },
+        { error: "Invalid username, parent email, or password" },
         { status: 400 }
       );
     }
