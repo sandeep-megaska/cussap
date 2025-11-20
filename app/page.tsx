@@ -519,7 +519,28 @@ const handleSmartDetect = async () => {
       ))}
     </select>
   </label>
-          {/* Smart free-text intent (optional) */}
+
+
+</div>
+
+        {/* Difficulty */}
+        <div style={{ marginBottom: 12 }}>
+          <label>
+            Difficulty:
+            <select
+              value={difficulty}
+              onChange={(e) =>
+                setDifficulty(e.target.value as Difficulty)
+              }
+              style={{ marginLeft: 8 }}
+            >
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="advanced">Advanced</option>
+              <option value="super_brain">Super Brain</option>
+            </select>
+          </label>
+                    {/* Smart free-text intent (optional) */}
 <section
   style={{
     margin: "16px 0 24px",
@@ -576,26 +597,6 @@ const handleSmartDetect = async () => {
     </p>
   )}
 </section>
-
-</div>
-
-        {/* Difficulty */}
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            Difficulty:
-            <select
-              value={difficulty}
-              onChange={(e) =>
-                setDifficulty(e.target.value as Difficulty)
-              }
-              style={{ marginLeft: 8 }}
-            >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="advanced">Advanced</option>
-              <option value="super_brain">Super Brain</option>
-            </select>
-          </label>
         </div>
 
         <button
