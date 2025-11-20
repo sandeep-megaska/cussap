@@ -542,7 +542,7 @@ export const SYLLABUS: Record<number, Record<string, string[]>> = {
   ],
 },
 
-}
+
 };
 
 export function getSubjectsForGrade(grade: number): string[] {
