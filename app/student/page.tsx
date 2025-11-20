@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import {
   getSubjectsForGrade,
   getChaptersForGradeSubject,
-} from "../lib/syllabus";
+} from "../../lib/syllabus";
+
 
 type Difficulty = "easy" | "medium" | "advanced" | "super_brain";
 type Grade = 7 | 8 | 9 | 10 | 11 | 12;
@@ -54,7 +55,7 @@ function calculateLevel(scorePercent: number): string {
   return "Needs Foundation (Easy)";
 }
 
-export default function HomePage() {
+export default functionStudentPage() {
   const [stage, setStage] = useState<Stage>("setup");
 
 
