@@ -174,6 +174,13 @@ useEffect(() => {
 
   const startQuiz = async () => {
     if (!chapter) return;
+    if (!childProfile && anonQuizCount >= 2) {
+  setError(
+    "You have used your 2 free quizzes on this device. Please create a free child profile on the home page or at /child to continue."
+  );
+  return;
+}
+
     setStage("loading");
     setError(null);
 
@@ -233,6 +240,23 @@ useEffect(() => {
     );
     setScorePercent(percent);
     setStage("result");
+    // after setScorePercent(percent); setStage("result"); etc.
+if (!childProfile) {
+  setAnonQuizCount((prev) => {
+    const next = prev + 1;
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          "cussap_anonymous_quiz_count",
+          String(next)
+        );
+      }
+    } catch (e) {
+      console.error("Failed to persist anonymous quiz count:", e);
+    }
+    return next;
+  });
+}
 
     // Save quiz session (fire-and-forget)
     try {
