@@ -540,7 +540,7 @@ export const SYLLABUS: Record<number, Record<string, string[]>> = {
     "Environmental Issues – Pollution, Global Warming, Ozone Depletion",
     "Solid Waste Management and Sustainable Development",
   ],
-},
+}
 
 
 };
