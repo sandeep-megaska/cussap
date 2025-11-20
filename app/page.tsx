@@ -61,22 +61,8 @@ export default function LandingPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f9fafb", // light grey background
-        color: "#0f172a",
-      }}
-    >
-      <main
-        style={{
-          maxWidth: 1120,
-          margin: "0 auto",
-          padding: "24px 16px 48px",
-          fontFamily:
-            'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-        }}
-      >
+    <div className="landing-root">
+      <main className="landing-main">
         {/* HEADER (light) */}
         <header
           style={{
@@ -85,6 +71,7 @@ export default function LandingPage() {
             alignItems: "center",
             marginBottom: 24,
             gap: 12,
+            flexWrap: "wrap", // ⭐ helps on small screens
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -140,15 +127,7 @@ export default function LandingPage() {
         </header>
 
         {/* HERO */}
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr)",
-            gap: 24,
-            alignItems: "center",
-            marginBottom: 40,
-          }}
-        >
+        <section className="landing-hero">
           <div>
             <div
               style={{
@@ -198,7 +177,7 @@ export default function LandingPage() {
               teacher.
             </p>
 
-            <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
+            <div style={{ marginTop: 20, display: "flex", gap: 12, flexWrap: "wrap" }}>
               <button
                 type="button"
                 onClick={scrollToRegister}
@@ -254,8 +233,7 @@ export default function LandingPage() {
               backgroundColor: "white",
               display: "grid",
               gap: 12,
-              boxShadow:
-                "0 10px 20px rgba(15, 23, 42, 0.08)",
+              boxShadow: "0 10px 20px rgba(15, 23, 42, 0.08)",
             }}
           >
             <div
@@ -400,7 +378,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* TESTIMONIALS (placeholder) */}
+        {/* TESTIMONIALS */}
         <section style={{ marginBottom: 40 }}>
           <h2
             style={{
@@ -662,6 +640,7 @@ export default function LandingPage() {
                 gap: 12,
                 alignItems: "center",
                 marginTop: 4,
+                flexWrap: "wrap",
               }}
             >
               <button
