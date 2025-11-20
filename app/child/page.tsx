@@ -27,7 +27,7 @@ export default function ChildAuthPage() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-
+const [loginParentEmail, setLoginParentEmail] = useState("");
   const saveProfileLocal = (profile: ChildProfile) => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(
@@ -94,6 +94,7 @@ export default function ChildAuthPage() {
         body: JSON.stringify({
           username: loginUsername,
           password: loginPassword,
+           parentEmail: loginParentEmail,
         }),
       });
 
@@ -220,22 +221,22 @@ export default function ChildAuthPage() {
             </label>
 
             <label style={{ display: "flex", flexDirection: "column" }}>
-              Parent email
-              <input
-                type="email"
-                required
-                value={signupParentEmail}
-                onChange={(e) => setSignupParentEmail(e.target.value)}
-                style={{
-                  marginTop: 4,
-                  borderRadius: 8,
-                  border: "1px solid rgba(148,163,184,0.7)",
-                  background: "rgba(15,23,42,0.95)",
-                  color: "#e5e7eb",
-                  padding: "6px 10px",
-                }}
-              />
-            </label>
+  Parent email (same as registration)
+  <input
+    type="email"
+    required
+    value={loginParentEmail}
+    onChange={(e) => setLoginParentEmail(e.target.value)}
+    style={{
+      marginTop: 4,
+      borderRadius: 8,
+      border: "1px solid rgba(148,163,184,0.7)",
+      background: "rgba(15,23,42,0.95)",
+      color: "#e5e7eb",
+      padding: "6px 10px",
+    }}
+  />
+</label>
 
             <button
               type="submit"
