@@ -274,8 +274,6 @@ export const SYLLABUS: Record<number, Record<string, string[]>> = {
     "Linear Programming",
     "Probability"
   ],
-},
-
 
    Physics: [
     // ELECTROSTATICS
