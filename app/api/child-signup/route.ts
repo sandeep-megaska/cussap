@@ -56,28 +56,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Check that parent email is already registered
-    const { data: parentReg, error: parentRegError } = await supabase
-      .from("edtech_registrations")
-      .select("id")
-      .ilike("parent_email", cleanParentEmail)
-      .maybeSingle();
+    // 🔓 For now we do NOT block based on edtech_registrations.
+    // The parent email is simply the "identity string" that ties:
+    // - child profile
+    // - parent dashboard
+    // - future features
+    // Later we can enforce that this matches a Supabase auth user.
 
-    if (parentRegError) {
-      console.error("Error checking parent registration:", parentRegError);
-    }
-
-    if (!parentReg) {
-      return NextResponse.json(
-        {
-          error:
-            "This parent email is not registered yet. Please register / log in as a parent first, then create child profiles.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if username taken
+    // 1) Check if username is already taken
     const { data: existing, error: existingErr } = await supabase
       .from("child_accounts")
       .select("id")
@@ -97,6 +83,7 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = hashPassword(rawPassword);
 
+    // 2) Insert child account
     const { data, error } = await supabase
       .from("child_accounts")
       .insert({
