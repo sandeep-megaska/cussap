@@ -56,6 +56,9 @@ function calculateLevel(scorePercent: number): string {
 
 export default function HomePage() {
   const [stage, setStage] = useState<Stage>("setup");
+const [intentText, setIntentText] = useState("");
+const [intentLoading, setIntentLoading] = useState(false);
+const [intentError, setIntentError] = useState<string | null>(null);
 
   // Core selections
   const [grade, setGrade] = useState<Grade>(8);
@@ -297,6 +300,53 @@ export default function HomePage() {
       }));
     }
   };
+const handleSmartDetect = async () => {
+  if (!intentText.trim()) return;
+
+  setIntentLoading(true);
+  setIntentError(null);
+
+  try {
+    const res = await fetch("/api/interpret-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: intentText }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Could not interpret text");
+    }
+
+    const { grade: g, subject: s, chapter: c } = data as {
+      grade: number | null;
+      subject: string | null;
+      chapter: string | null;
+    };
+
+    // Apply what we got (with basic checks)
+    if (g && [7, 8, 9, 10, 11, 12].includes(g)) {
+      setGrade(g as Grade);
+    }
+    if (s) {
+      setSubject(s);
+    }
+    if (c) {
+      setChapter(c);
+    }
+
+    // If nothing recognised
+    if (!g && !s && !c) {
+      setIntentError("I couldn't detect class/subject clearly. Please try again or use the dropdowns.");
+    }
+  } catch (err: any) {
+    console.error(err);
+    setIntentError(err.message || "Something went wrong.");
+  } finally {
+    setIntentLoading(false);
+  }
+};
 
   // ----- AI Instructor: “Explain like a teacher” -----
 
