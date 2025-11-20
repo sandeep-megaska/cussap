@@ -9,28 +9,39 @@ function hashPassword(pw: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log("DEBUG /api/child-signup body:", body);
+
     const {
       username,
       password,
       childName,
       parentEmail,
-    }: {
-      username: string;
-      password: string;
-      childName: string;
-      parentEmail: string;
-    } = body;
+    } = body as {
+      username?: string;
+      password?: string;
+      childName?: string;
+      parentEmail?: string;
+    };
 
-    if (!username || !password || !childName || !parentEmail) {
+    const cleanUsername = (username ?? "").trim().toLowerCase();
+    const cleanChildName = (childName ?? "").trim();
+    const cleanParentEmail = (parentEmail ?? "").trim().toLowerCase();
+    const rawPassword = (password ?? "").trim();
+
+    if (!cleanUsername || !rawPassword || !cleanChildName || !cleanParentEmail) {
+      const missing: string[] = [];
+      if (!cleanUsername) missing.push("username");
+      if (!rawPassword) missing.push("password");
+      if (!cleanChildName) missing.push("childName");
+      if (!cleanParentEmail) missing.push("parentEmail");
+
       return NextResponse.json(
-        { error: "All fields are required" },
+        {
+          error: `All fields are required. Missing: ${missing.join(", ")}`,
+        },
         { status: 400 }
       );
     }
-
-    const cleanUsername = username.trim().toLowerCase();
-    const cleanChildName = childName.trim();
-    const cleanParentEmail = parentEmail.trim().toLowerCase();
 
     if (cleanUsername.length < 3) {
       return NextResponse.json(
@@ -38,15 +49,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    if (password.length < 4) {
+    if (rawPassword.length < 4) {
       return NextResponse.json(
         { error: "Password should be at least 4 characters" },
         { status: 400 }
       );
     }
 
-    // ✅ 1) Check that parent email is already registered
-    // Here "registered" = exists in edtech_registrations (your landing/parent flow).
+    // ✅ Check that parent email is already registered
     const { data: parentReg, error: parentRegError } = await supabase
       .from("edtech_registrations")
       .select("id")
@@ -67,7 +77,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2) Check if username is already taken (global unique for now)
+    // Check if username taken
     const { data: existing, error: existingErr } = await supabase
       .from("child_accounts")
       .select("id")
@@ -85,9 +95,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const passwordHash = hashPassword(password);
+    const passwordHash = hashPassword(rawPassword);
 
-    // 3) Insert child account
     const { data, error } = await supabase
       .from("child_accounts")
       .insert({
