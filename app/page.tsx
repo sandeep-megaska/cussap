@@ -519,6 +519,64 @@ const handleSmartDetect = async () => {
       ))}
     </select>
   </label>
+          {/* Smart free-text intent (optional) */}
+<section
+  style={{
+    margin: "16px 0 24px",
+    padding: "12px 14px",
+    borderRadius: 12,
+    border: "1px solid rgba(148,163,184,0.5)",
+    background: "rgba(15,23,42,0.75)",
+  }}
+>
+  <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>
+    Smart topic finder (optional):
+  </label>
+  <p style={{ fontSize: "0.8rem", margin: "4px 0 8px", opacity: 0.85 }}>
+    Type something like:{" "}
+    <em>
+      "I'm in class 8 and want practice on sound"{" "}
+    </em>{" "}
+    or{" "}
+    <em>
+      "My son is in 10th, need help in quadratic equations"
+    </em>
+    . We’ll auto-select class, subject and chapter.
+  </p>
+
+  <textarea
+    value={intentText}
+    onChange={(e) => setIntentText(e.target.value)}
+    rows={2}
+    style={{
+      width: "100%",
+      resize: "vertical",
+      borderRadius: 12,
+      border: "1px solid rgba(148,163,184,0.7)",
+      background: "rgba(15,23,42,0.95)",
+      color: "#e5e7eb",
+      padding: "8px 10px",
+      fontSize: "0.9rem",
+      marginBottom: 8,
+    }}
+    placeholder='Eg. "Class 7 science, chapter on heat"'
+  />
+
+  <button
+    type="button"
+    onClick={handleSmartDetect}
+    disabled={intentLoading || !intentText.trim()}
+  >
+    {intentLoading ? "Detecting…" : "Detect class & subject"}
+  </button>
+
+  {intentError && (
+    <p style={{ color: "salmon", fontSize: "0.8rem", marginTop: 6 }}>
+      {intentError}
+    </p>
+  )}
+</section>
+
 </div>
 
         {/* Difficulty */}
