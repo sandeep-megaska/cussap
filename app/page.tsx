@@ -1,744 +1,539 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import {
-  getSubjectsForGrade,
-  getChaptersForGradeSubject,
-} from "../lib/syllabus";
+import { useState } from "react";
 
-type Difficulty = "easy" | "medium" | "advanced" | "super_brain";
-type Grade = 7 | 8 | 9 | 10 | 11 | 12;
-
-type Purpose =
-  | "general"
-  | "board_cbse"
-  | "jee_main"
-  | "jee_advanced"
-  | "neet"
-  | "state_engineering"
-  | "olympiad";
-
-interface Question {
-  id: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-  explanation?: string;
-  difficulty: Difficulty;
-}
-
-type Stage = "setup" | "loading" | "quiz" | "result" | "review";
-
-interface ExplanationState {
-  text?: string;
-  loading: boolean;
-  error?: string;
-}
-
-const GRADES: Grade[] = [7, 8, 9, 10, 11, 12];
-
-const PURPOSES: { value: Purpose; label: string }[] = [
-  { value: "general", label: "General Practice" },
-  { value: "board_cbse", label: "CBSE Board Exam" },
-  { value: "jee_main", label: "JEE (Main)" },
-  { value: "jee_advanced", label: "JEE (Advanced)" },
-  { value: "neet", label: "NEET" },
-  { value: "state_engineering", label: "State Entrance (Engineering)" },
-  { value: "olympiad", label: "Olympiad / Talent Exam" },
-];
-
-function calculateLevel(scorePercent: number): string {
-  if (scorePercent >= 80) return "Super Brain";
-  if (scorePercent >= 60) return "Advanced";
-  if (scorePercent >= 40) return "Medium";
-  return "Needs Foundation (Easy)";
-}
-
-export default function HomePage() {
-  const [stage, setStage] = useState<Stage>("setup");
-
-
-  // Core selections
-  const [grade, setGrade] = useState<Grade>(8);
-  const [subject, setSubject] = useState<string>("Maths");
-  const [chapter, setChapter] = useState<string>("");
-
-  const [purpose, setPurpose] = useState<Purpose>("general");
-  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
-
-  const [studentName, setStudentName] = useState<string>("");
-  const [parentEmail, setParentEmail] = useState<string>("");
-
-  const [savingSession, setSavingSession] = useState(false);
-
-  // Quiz state
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<number[]>([]);
-  const [scorePercent, setScorePercent] = useState(0);
+export default function LandingPage() {
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Per-question AI explanation (Explain this question)
-  const [explanations, setExplanations] = useState<
-    Record<string, ExplanationState>
-  >({});
+  const [parentName, setParentName] = useState("");
+  const [parentEmail, setParentEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [childrenCount, setChildrenCount] = useState(1);
+  const [childrenInfo, setChildrenInfo] = useState("");
+  const [notes, setNotes] = useState("");
 
-  // AI Instructor (global per current question)
-  const [instructorLoading, setInstructorLoading] = useState(false);
-  const [instructorExplanation, setInstructorExplanation] =
-    useState<string | null>(null);
-  const [instructorError, setInstructorError] = useState<string | null>(null);
-
-  // ----- Derived syllabus lists -----
-
-  const subjectsForGrade = useMemo(
-    () => getSubjectsForGrade(grade),
-    [grade]
-  );
-
-  const chaptersForSelection = useMemo(
-    () => getChaptersForGradeSubject(grade, subject),
-    [grade, subject]
-  );
-
-  // Ensure subject is valid for grade
-  useEffect(() => {
-    const availableSubjects = getSubjectsForGrade(grade);
-    if (availableSubjects.length === 0) {
-      setSubject("");
-      setChapter("");
-      return;
-    }
-    if (!availableSubjects.includes(subject)) {
-      setSubject(availableSubjects[0]);
-      setChapter("");
-    }
-  }, [grade]);
-
-  // Ensure chapter is valid for (grade, subject)
-  useEffect(() => {
-    const availableChapters = getChaptersForGradeSubject(grade, subject);
-    if (availableChapters.length === 0) {
-      setChapter("");
-      return;
-    }
-    if (!availableChapters.includes(chapter)) {
-      setChapter(availableChapters[0]);
-    }
-  }, [grade, subject]);
-
-  // Reset AI Instructor explanation when moving between questions
-  useEffect(() => {
-    setInstructorExplanation(null);
-    setInstructorError(null);
-    setInstructorLoading(false);
-  }, [currentIndex]);
-
-  // ----- Quiz handlers -----
-
-  const startQuiz = async () => {
-    if (!chapter) return;
-    setStage("loading");
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setSuccess(null);
     setError(null);
 
     try {
-      const res = await fetch("/api/generate-questions", {
+      const res = await fetch("/api/registrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          chapter,
-          difficulty,
-          count: 10, // 10 for now; can increase later
-          grade,
-          subject,
-          purpose,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to generate questions");
-      }
-
-      const data = await res.json();
-      const qs: Question[] = data.questions;
-      setQuestions(qs);
-      setAnswers(Array(qs.length).fill(-1));
-      setCurrentIndex(0);
-      setStage("quiz");
-      setExplanations({});
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Something went wrong");
-      setStage("setup");
-    }
-  };
-
-  const selectAnswer = (optionIndex: number) => {
-    const newAnswers = [...answers];
-    newAnswers[currentIndex] = optionIndex;
-    setAnswers(newAnswers);
-  };
-
-  const goNext = async () => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((i) => i + 1);
-      return;
-    }
-
-    // Finish quiz
-    const correctCount = questions.reduce((acc, q, idx) => {
-      return acc + (answers[idx] === q.correctIndex ? 1 : 0);
-    }, 0);
-
-    const percent = Math.round(
-      (correctCount / questions.length) * 100
-    );
-    setScorePercent(percent);
-    setStage("result");
-
-    // Save quiz session (fire-and-forget)
-    try {
-      setSavingSession(true);
-      await fetch("/api/quiz-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentName,
+          parentName,
           parentEmail,
-          grade,
-          subject,
-          purpose,
-          chapter,
-          difficulty,
-          questions,
-          answers,
-          scorePercent: percent,
+          phone,
+          childrenCount,
+          childrenInfo,
+          notes,
         }),
       });
-    } catch (err) {
-      console.error("Failed to save quiz session", err);
-    } finally {
-      setSavingSession(false);
-    }
-  };
 
-  const goPrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((i) => i - 1);
-    }
-  };
-
-  const resetQuiz = () => {
-    setQuestions([]);
-    setAnswers([]);
-    setScorePercent(0);
-    setStage("setup");
-    setExplanations({});
-    setError(null);
-  };
-
-  const level = calculateLevel(scorePercent);
-
-  // ----- AI: Explain question (per-question text) -----
-
-  const requestExplanation = async (
-    q: Question,
-    yourAnswerIndex: number
-  ) => {
-    setExplanations((prev) => ({
-      ...prev,
-      [q.id]: {
-        loading: true,
-        text: prev[q.id]?.text,
-        error: undefined,
-      },
-    }));
-
-    try {
-      const res = await fetch("/api/explain", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: q.question,
-          options: q.options,
-          correctIndex: q.correctIndex,
-          studentIndex: yourAnswerIndex,
-          chapter,
-          difficulty,
-          grade,
-          subject,
-          purpose,
-        }),
-      });
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to get explanation");
+        throw new Error(data.error || "Failed to register");
       }
 
-      const data = await res.json();
-
-      setExplanations((prev) => ({
-        ...prev,
-        [q.id]: {
-          loading: false,
-          text: data.explanation,
-        },
-      }));
+      setSuccess("Thanks! You’re in. We’ll email you your access soon.");
+      setParentName("");
+      setParentEmail("");
+      setPhone("");
+      setChildrenCount(1);
+      setChildrenInfo("");
+      setNotes("");
     } catch (err: any) {
       console.error(err);
-      setExplanations((prev) => ({
-        ...prev,
-        [q.id]: {
-          loading: false,
-          text: prev[q.id]?.text,
-          error: err.message || "Error getting explanation",
-        },
-      }));
-    }
-  };
-
-  // ----- AI Instructor: “Explain like a teacher” -----
-
-  const handleInstructorExplain = async (questionIndex: number) => {
-    if (!questions[questionIndex]) return;
-
-    const q = questions[questionIndex];
-
-    setInstructorLoading(true);
-    setInstructorExplanation(null);
-    setInstructorError(null);
-
-    try {
-      const res = await fetch("/api/ai-instructor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          grade,
-          subject,
-          chapter,
-          difficulty,
-          question: q.question,
-          options: q.options,
-          correctIndex: q.correctIndex,
-          chosenIndex: answers[questionIndex],
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to get explanation");
-      }
-
-      const data = await res.json();
-      setInstructorExplanation(data.explanation || "No explanation returned.");
-    } catch (err: any) {
-      console.error(err);
-      setInstructorError(
-        err.message || "Something went wrong while explaining."
-      );
+      setError(err.message || "Something went wrong.");
     } finally {
-      setInstructorLoading(false);
+      setSubmitting(false);
     }
   };
 
-  // ----- RENDER -----
+  const scrollToRegister = () => {
+    const el = document.getElementById("register-section");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
 
-  if (stage === "setup") {
-    return (
-      <main className="page-main">
-        <div className="badge-tagline">
-          <span className="badge-tagline-dot" />
-          Student Mode · Practice & Diagnose
+  return (
+    <main className="page-main">
+      {/* HEADER */}
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 24,
+          gap: 12,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 999,
+              background:
+                "linear-gradient(135deg, #2563eb, #22c55e)",
+            }}
+          />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>
+              CUSSAP
+            </div>
+            <div
+              style={{
+                fontSize: "0.8rem",
+                opacity: 0.75,
+                lineHeight: 1.2,
+              }}
+            >
+              CBSE AI Practice Lab
+            </div>
+          </div>
         </div>
-        <h1>Smart CBSE Practice – AI Quiz</h1>
-        <p>Choose your class, subject, and goal to get a customised quiz.</p>
 
-        {error && <p style={{ color: "red" }}>Error: {error}</p>}
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={() => (window.location.href = "/student")}
+          >
+            Try Quiz Now
+          </button>
+        </div>
+      </header>
 
-        {/* Student / Parent details */}
+      {/* HERO */}
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr)",
+          gap: 24,
+          alignItems: "center",
+          marginBottom: 40,
+        }}
+      >
+        <div>
+          <div className="badge-tagline" style={{ marginBottom: 12 }}>
+            <span className="badge-tagline-dot" />
+            Early Access · 100% Free for Friends & Family
+          </div>
+          <h1 style={{ marginBottom: 12 }}>
+            Check your child’s{" "}
+            <span style={{ color: "#22c55e" }}>real</span> understanding,
+            not just marks.
+          </h1>
+          <p style={{ maxWidth: 540, opacity: 0.9 }}>
+            CUSSAP is an AI–enabled practice tool based on NCERT / CBSE
+            syllabus. It quietly tests how deep your child’s concepts are
+            in Maths & Science – and then explains mistakes like a patient
+            teacher.
+          </p>
+
+          <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
+            <button type="button" onClick={scrollToRegister}>
+              Get Free Early Access
+            </button>
+            <button
+              type="button"
+              onClick={() => (window.location.href = "/student")}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(148,163,184,0.8)",
+              }}
+            >
+              Test now (no login)
+            </button>
+          </div>
+
+          <p
+            style={{
+              fontSize: "0.8rem",
+              marginTop: 8,
+              opacity: 0.75,
+            }}
+          >
+            Classes 7–12 · Maths, Physics, Chemistry, Biology · Concept
+            wise quizzes
+          </p>
+        </div>
+
+        {/* Hero "image" – simple card with highlights */}
+        <div
+          style={{
+            borderRadius: 16,
+            padding: 16,
+            border: "1px solid rgba(148,163,184,0.5)",
+            background: "rgba(15,23,42,0.9)",
+            display: "grid",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              borderRadius: 12,
+              padding: 12,
+              background:
+                "linear-gradient(135deg, rgba(37,99,235,0.3), rgba(56,189,248,0.2))",
+            }}
+          >
+            <div style={{ fontSize: "0.85rem", opacity: 0.85 }}>
+              Example: Class 8 · Physics · Sound
+            </div>
+            <div style={{ fontSize: "0.9rem", marginTop: 4 }}>
+              “Your child struggled with questions on{' '}
+              <strong>amplitude</strong> and{' '}
+              <strong>frequency</strong>. We recommend one more practice
+              set at Medium difficulty.”
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 10,
+              fontSize: "0.85rem",
+            }}
+          >
+            <div
+              style={{
+                borderRadius: 10,
+                padding: 10,
+                background: "rgba(15,23,42,0.95)",
+                border: "1px solid rgba(148,163,184,0.5)",
+              }}
+            >
+              <div style={{ fontWeight: 600 }}>Live levels</div>
+              <div style={{ opacity: 0.85 }}>
+                Easy → Medium → Advanced → Super Brain – per chapter.
+              </div>
+            </div>
+            <div
+              style={{
+                borderRadius: 10,
+                padding: 10,
+                background: "rgba(15,23,42,0.95)",
+                border: "1px solid rgba(148,163,184,0.5)",
+              }}
+            >
+              <div style={{ fontWeight: 600 }}>AI explanations</div>
+              <div style={{ opacity: 0.85 }}>
+                Every wrong answer can be explained step-by-step.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* BENEFITS SECTION */}
+      <section style={{ marginBottom: 40 }}>
+        <h2>Why parents like CUSSAP?</h2>
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 12,
-            marginBottom: 16,
+            gap: 16,
+            marginTop: 12,
           }}
         >
-          <label>
-            Student Name:
-            <input
-              type="text"
-              value={studentName}
-              onChange={(e) => setStudentName(e.target.value)}
-              placeholder="Optional"
-              style={{ display: "block", width: "80%", marginTop: 4 }}
-            />
-          </label>
-
-          <label>
-            Parent Email (optional):
-            <input
-              type="email"
-              value={parentEmail}
-              onChange={(e) => setParentEmail(e.target.value)}
-              placeholder="for progress reports"
-              style={{ display: "block", width: "80%", marginTop: 4 }}
-            />
-          </label>
-        </div>
-
-        {/* Core selection grid */}
-        <div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: 12,
-    marginBottom: 16,
-  }}
->
-  {/* Class / Grade */}
-  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-    Class:
-    <select
-      value={grade}
-      onChange={(e) => setGrade(Number(e.target.value) as Grade)}
-      style={{ width: "100%" }}
-    >
-      <option value={7}>Class 7</option>
-      <option value={8}>Class 8</option>
-      <option value={9}>Class 9</option>
-      <option value={10}>Class 10</option>
-      <option value={11}>Class 11</option>
-      <option value={12}>Class 12</option>
-    </select>
-  </label>
-
-  {/* Subject */}
-  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-    Subject:
-    <select
-      value={subject}
-      onChange={(e) => setSubject(e.target.value)}
-      style={{ width: "100%" }}
-    >
-      {subjectsForGrade.length === 0 ? (
-        <option value="">No subjects configured</option>
-      ) : (
-        subjectsForGrade.map((subj) => (
-          <option key={subj} value={subj}>
-            {subj}
-          </option>
-        ))
-      )}
-    </select>
-  </label>
-
-  {/* Chapter */}
-  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-    Chapter / Topic:
-    <select
-      value={chapter}
-      onChange={(e) => setChapter(e.target.value)}
-      style={{ width: "100%" }}
-    >
-      {chaptersForSelection.length === 0 ? (
-        <option value="">Select a subject to see chapters</option>
-      ) : (
-        chaptersForSelection.map((ch) => (
-          <option key={ch} value={ch}>
-            {ch}
-          </option>
-        ))
-      )}
-    </select>
-  </label>
-
-  {/* Purpose / Goal */}
-  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-    Goal:
-    <select
-      value={purpose}
-      onChange={(e) => setPurpose(e.target.value as Purpose)}
-      style={{ width: "100%" }}
-    >
-      {PURPOSES.map((p) => (
-        <option key={p.value} value={p.value}>
-          {p.label}
-        </option>
-      ))}
-    </select>
-  </label>
-
-
-</div>
-
-        {/* Difficulty */}
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            Difficulty:
-            <select
-              value={difficulty}
-              onChange={(e) =>
-                setDifficulty(e.target.value as Difficulty)
-              }
-              style={{ marginLeft: 8 }}
-            >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="advanced">Advanced</option>
-              <option value="super_brain">Super Brain</option>
-            </select>
-          </label>
-                    {/* Smart free-text intent (optional) */}
-
-        </div>
-
-        <button
-          onClick={startQuiz}
-          disabled={!chapter}
-          style={{ marginTop: 8 }}
-        >
-          Start Quiz
-        </button>
-      </main>
-    );
-  }
-
-  if (stage === "loading") {
-    return (
-      <main className="page-main">
-        <h2>Preparing your quiz…</h2>
-        <p>
-          Class {grade} – {subject} –{" "}
-          {PURPOSES.find((p) => p.value === purpose)?.label ?? "Practice"}
-        </p>
-        <p>Please wait a moment while we generate questions.</p>
-      </main>
-    );
-  }
-
-  if (stage === "quiz") {
-    const q = questions[currentIndex];
-    const selected = answers[currentIndex];
-
-    return (
-      <main className="page-main">
-        <h2>
-          Class {grade} {subject} – Q{currentIndex + 1} /{" "}
-          {questions.length}
-        </h2>
-        <p>
-          <strong>Goal:</strong>{" "}
-          {PURPOSES.find((p) => p.value === purpose)?.label ??
-            "Practice"}{" "}
-          | <strong>Difficulty:</strong> {difficulty}
-        </p>
-        <p style={{ marginTop: 16 }}>{q.question}</p>
-
-        <ul style={{ listStyle: "none", padding: 0, marginTop: 12 }}>
-          {q.options.map((opt, idx) => (
-            <li key={idx} style={{ marginBottom: 8 }}>
-              <label>
-                <input
-                  type="radio"
-                  name="answer"
-                  checked={selected === idx}
-                  onChange={() => selectAnswer(idx)}
-                />{" "}
-                {opt}
-              </label>
-            </li>
-          ))}
-        </ul>
-
-        <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
-          <button onClick={goPrev} disabled={currentIndex === 0}>
-            Previous
-          </button>
-          <button onClick={goNext}>
-            {currentIndex === questions.length - 1
-              ? "Finish Quiz"
-              : "Next"}
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  if (stage === "result") {
-    return (
-      <main className="page-main">
-        <h1>Quiz Result</h1>
-        <p>
-          <strong>Class:</strong> {grade}
-        </p>
-        <p>
-          <strong>Subject:</strong> {subject}
-        </p>
-        <p>
-          <strong>Goal:</strong>{" "}
-          {PURPOSES.find((p) => p.value === purpose)?.label ??
-            "Practice"}
-        </p>
-        <p>
-          <strong>Chapter:</strong> {chapter}
-        </p>
-        <p>
-          <strong>Score:</strong> {scorePercent}%
-        </p>
-        <p>
-          <strong>Your level in this chapter:</strong> <span>{level}</span>
-        </p>
-
-        <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
-          <button onClick={resetQuiz}>Try another quiz</button>
-          <button onClick={() => setStage("review")}>
-            Teach me my mistakes
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  if (stage === "review") {
-    const wrongQuestions = questions.filter(
-      (_, idx) => answers[idx] !== questions[idx].correctIndex
-    );
-
-    return (
-      <main className="page-main">
-        <h1>Review & Learn</h1>
-        <p>
-          Class {grade} – {subject} –{" "}
-          {PURPOSES.find((p) => p.value === purpose)?.label ??
-            "Practice"}
-        </p>
-        <p>
-          We’ll show you the questions you got wrong, with correct answers and
-          explanations.
-        </p>
-
-        {wrongQuestions.length === 0 && (
-          <p>
-            Amazing! You got everything right. Try a harder difficulty or a
-            tougher exam goal next time.
-          </p>
-        )}
-
-        {wrongQuestions.map((q) => {
-          const originalIndex = questions.findIndex(
-            (qq) => qq.id === q.id
-          );
-          const yourAnswerIndex = answers[originalIndex];
-          const explanationState = explanations[q.id];
-
-          return (
-            <div
-              key={q.id}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: 8,
-                padding: 12,
-                marginBottom: 12,
-              }}
-            >
-              <p>
-                <strong>
-                  Q{originalIndex + 1}. {q.question}
-                </strong>
-              </p>
-              <p>
-                <strong>Your answer:</strong>{" "}
-                {yourAnswerIndex >= 0
-                  ? q.options[yourAnswerIndex]
-                  : "Not answered"}
-              </p>
-              <p>
-                <strong>Correct answer:</strong>{" "}
-                {q.options[q.correctIndex]}
-              </p>
-
-              {q.explanation && (
-                <p style={{ marginTop: 8 }}>
-                  <strong>Basic explanation:</strong> {q.explanation}
-                </p>
-              )}
-
-              <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-                <button
-                  onClick={() =>
-                    requestExplanation(q, yourAnswerIndex)
-                  }
-                  disabled={explanationState?.loading}
-                >
-                  {explanationState?.loading
-                    ? "Explaining..."
-                    : "Explain this question"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleInstructorExplain(originalIndex)}
-                  disabled={instructorLoading}
-                >
-                  {instructorLoading
-                    ? "AI Instructor is thinking..."
-                    : "Ask AI Instructor"}
-                </button>
-              </div>
-
-              {explanationState?.error && (
-                <p style={{ color: "red", marginTop: 8 }}>
-                  {explanationState.error}
-                </p>
-              )}
-
-              {explanationState?.text && (
-                <p style={{ marginTop: 8 }}>
-                  <strong>AI Explanation:</strong>{" "}
-                  {explanationState.text}
-                </p>
-              )}
-            </div>
-          );
-        })}
-
-        {instructorError && (
-          <p style={{ color: "salmon", marginTop: 8 }}>
-            {instructorError}
-          </p>
-        )}
-
-        {instructorExplanation && (
           <div
             style={{
-              marginTop: 12,
-              padding: 10,
-              borderRadius: 8,
-              border: "1px solid rgba(148, 163, 184, 0.5)",
-              background: "rgba(15,23,42,0.85)",
-              fontSize: 14,
-              lineHeight: 1.5,
-              whiteSpace: "pre-wrap",
+              borderRadius: 12,
+              padding: 12,
+              border: "1px solid rgba(148,163,184,0.4)",
             }}
           >
-            <strong
-              style={{ display: "block", marginBottom: 4 }}
-            >
-              AI Instructor:
-            </strong>
-            {instructorExplanation}
+            <h3 style={{ fontSize: "1rem" }}>Concept–wise diagnosis</h3>
+            <p style={{ fontSize: "0.9rem", opacity: 0.9 }}>
+              Instead of only marks, see how your child performs chapter
+              by chapter – Rational Numbers, Light, Chemical Reactions,
+              and more.
+            </p>
           </div>
-        )}
+          <div
+            style={{
+              borderRadius: 12,
+              padding: 12,
+              border: "1px solid rgba(148,163,184,0.4)",
+            }}
+          >
+            <h3 style={{ fontSize: "1rem" }}>Explains “why it’s wrong”</h3>
+            <p style={{ fontSize: "0.9rem", opacity: 0.9 }}>
+              Our AI Instructor explains every mistake in simple language,
+              like a patient home tutor – not just showing the correct
+              option.
+            </p>
+          </div>
+          <div
+            style={{
+              borderRadius: 12,
+              padding: 12,
+              border: "1px solid rgba(148,163,184,0.4)",
+            }}
+          >
+            <h3 style={{ fontSize: "1rem" }}>Built on NCERT / CBSE</h3>
+            <p style={{ fontSize: "0.9rem", opacity: 0.9 }}>
+              Chapters & topics are mapped to NCERT books, Classes 7–12,
+              so it stays close to school + board exams.
+            </p>
+          </div>
+        </div>
+      </section>
 
-        <button onClick={resetQuiz} style={{ marginTop: 16 }}>
-          Back to new quiz
-        </button>
-      </main>
-    );
-  }
+      {/* TESTIMONIALS PLACEHOLDER */}
+      <section style={{ marginBottom: 40 }}>
+        <h2>What early parents say (sample placeholder)</h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: 16,
+            marginTop: 12,
+          }}
+        >
+          <div
+            style={{
+              borderRadius: 12,
+              padding: 12,
+              border: "1px solid rgba(148,163,184,0.4)",
+            }}
+          >
+            <p style={{ fontSize: "0.9rem" }}>
+              “My daughter is in Class 8. CUSSAP showed me exactly which
+              maths chapters need help – saved us hours of random
+              practice.”
+            </p>
+            <p
+              style={{
+                fontSize: "0.8rem",
+                marginTop: 6,
+                opacity: 0.8,
+              }}
+            >
+              – Parent (Pilot user)
+            </p>
+          </div>
+          <div
+            style={{
+              borderRadius: 12,
+              padding: 12,
+              border: "1px solid rgba(148,163,184,0.4)",
+            }}
+          >
+            <p style={{ fontSize: "0.9rem" }}>
+              “The AI explanation after each wrong answer is the best
+              part. Feels like a calm teacher sitting next to him.”
+            </p>
+            <p
+              style={{
+                fontSize: "0.8rem",
+                marginTop: 6,
+                opacity: 0.8,
+              }}
+            >
+              – Parent (Pilot user)
+            </p>
+          </div>
+        </div>
+      </section>
 
-  return null;
+      {/* REGISTRATION SECTION */}
+      <section id="register-section" style={{ marginBottom: 40 }}>
+        <h2>Early access registration (free)</h2>
+        <p style={{ maxWidth: 520, fontSize: "0.9rem", opacity: 0.9 }}>
+          For now, all friends & family get full access for free. We’ll
+          later use this list to offer controlled access / subscriptions.
+          Please share basic details:
+        </p>
+
+        <form
+          onSubmit={handleRegister}
+          style={{
+            marginTop: 16,
+            borderRadius: 16,
+            border: "1px solid rgba(148,163,184,0.5)",
+            padding: 16,
+            display: "grid",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 12,
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+              }}
+            >
+              Your name
+              <input
+                type="text"
+                required
+                value={parentName}
+                onChange={(e) => setParentName(e.target.value)}
+              />
+            </label>
+
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+              }}
+            >
+              Email ID
+              <input
+                type="email"
+                required
+                value={parentEmail}
+                onChange={(e) => setParentEmail(e.target.value)}
+              />
+            </label>
+
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+              }}
+            >
+              Phone (optional)
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </label>
+
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+              }}
+            >
+              Number of children
+              <input
+                type="number"
+                min={1}
+                max={5}
+                value={childrenCount}
+                onChange={(e) =>
+                  setChildrenCount(
+                    Math.max(1, Number(e.target.value) || 1)
+                  )
+                }
+              />
+            </label>
+          </div>
+
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            Children’s class & subjects (free text)
+            <textarea
+              rows={2}
+              value={childrenInfo}
+              onChange={(e) => setChildrenInfo(e.target.value)}
+              placeholder='Eg. "Daughter – Class 8, Maths & Science; Son – Class 10, Physics"'
+              style={{
+                resize: "vertical",
+                borderRadius: 12,
+                border: "1px solid rgba(148,163,184,0.7)",
+                background: "rgba(15,23,42,0.95)",
+                color: "#e5e7eb",
+                padding: "8px 10px",
+                fontSize: "0.9rem",
+              }}
+            />
+          </label>
+
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            Anything else we should know? (optional)
+            <textarea
+              rows={2}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Eg. Focus on board exam, or needs help in basics first, etc."
+              style={{
+                resize: "vertical",
+                borderRadius: 12,
+                border: "1px solid rgba(148,163,184,0.7)",
+                background: "rgba(15,23,42,0.95)",
+                color: "#e5e7eb",
+                padding: "8px 10px",
+                fontSize: "0.9rem",
+              }}
+            />
+          </label>
+
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "center",
+              marginTop: 4,
+            }}
+          >
+            <button type="submit" disabled={submitting}>
+              {submitting ? "Saving..." : "Enroll for Early Access"}
+            </button>
+            <span style={{ fontSize: "0.8rem", opacity: 0.75 }}>
+              100% free now · limited to pilot users
+            </span>
+          </div>
+
+          {success && (
+            <p style={{ color: "#22c55e", fontSize: "0.85rem" }}>
+              {success}
+            </p>
+          )}
+          {error && (
+            <p style={{ color: "salmon", fontSize: "0.85rem" }}>
+              {error}
+            </p>
+          )}
+        </form>
+      </section>
+
+      {/* FOOTER */}
+      <footer
+        style={{
+          borderTop: "1px solid rgba(148,163,184,0.4)",
+          paddingTop: 12,
+          fontSize: "0.8rem",
+          opacity: 0.75,
+          display: "flex",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
+        <span>© {new Date().getFullYear()} CUSSAP · Pilot edition</span>
+        <span>Made with ❤️ for parents & students</span>
+      </footer>
+    </main>
+  );
 }
