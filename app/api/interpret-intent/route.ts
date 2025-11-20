@@ -44,21 +44,18 @@ Return ONLY a JSON object, nothing else, in this exact shape:
 
     const userPrompt = `Text: """${text.trim()}"""`;
 
-    // NOTE: SDK typings don't know about "responses" yet, but runtime does.
-    const response = await (client as any).responses.create({
+    // ✅ Use chat.completions instead of responses
+    const completion = await client.chat.completions.create({
       model: "gpt-4.1-mini",
-      input: [
+      response_format: { type: "json_object" },
+      messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      response_format: { type: "json_object" },
     });
 
-    // Be defensive about the shape of the response
     const raw =
-      (response as any).output_text ??
-      (response as any).output?.[0]?.content?.[0]?.text ??
-      "{}";
+      completion.choices[0]?.message?.content?.trim() ?? "{}";
 
     let parsed: any;
     try {
@@ -72,10 +69,9 @@ Return ONLY a JSON object, nothing else, in this exact shape:
     let subject = parsed?.subject ?? null;
     let chapter = parsed?.chapter ?? null;
 
-    // Normalise subject string (trim/capitalise basic)
+    // --- Normalise subject ---
     if (typeof subject === "string") {
       subject = subject.trim();
-      // Simple normalisation for common variants
       const map: Record<string, string> = {
         maths: "Maths",
         math: "Maths",
@@ -91,11 +87,12 @@ Return ONLY a JSON object, nothing else, in this exact shape:
       subject = map[key] ?? subject;
     }
 
-    // Validate grade & subject
+    // --- Validate grade & subject ---
     if (!ALLOWED_GRADES.includes(grade)) grade = null;
     if (typeof subject !== "string" || !ALLOWED_SUBJECTS.includes(subject)) {
       subject = null;
     }
+
     if (typeof chapter !== "string" || !chapter.trim()) {
       chapter = null;
     } else {
