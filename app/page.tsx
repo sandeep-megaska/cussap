@@ -314,6 +314,76 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+{/* PARENT ENTRY CARD – put this somewhere on the landing page */}
+<section
+  style={{
+    marginTop: 40,
+    padding: "24px 16px",
+    borderRadius: 16,
+    border: "1px solid rgba(148,163,184,0.3)",
+    background: "rgba(15,23,42,0.9)",
+    color: "#e5e7eb",
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)",
+    gap: 16,
+  }}
+>
+  <div>
+    <h2 style={{ fontSize: "1.35rem", marginBottom: 8 }}>
+      For Parents: Track Your Child’s Progress
+    </h2>
+    <p style={{ fontSize: "0.95rem", opacity: 0.9, marginBottom: 8 }}>
+      Use the <strong>Parent Portal</strong> to see all quiz attempts
+      across subjects, classes and goals (CBSE, JEE, NEET, etc.).
+    </p>
+    <ul
+      style={{
+        fontSize: "0.9rem",
+        opacity: 0.9,
+        paddingLeft: "1.1rem",
+        marginTop: 4,
+        marginBottom: 8,
+      }}
+    >
+      <li>See scores chapter-wise for each child</li>
+      <li>Understand strengths & weak areas instantly</li>
+      <li>Works even if children use different devices</li>
+    </ul>
+  </div>
+
+  <div
+    style={{
+      alignSelf: "center",
+      justifySelf: "flex-end",
+      display: "flex",
+      flexDirection: "column",
+      gap: 8,
+      minWidth: 220,
+    }}
+  >
+    <button
+      onClick={() => {
+        window.location.href = "/parent-portal";
+      }}
+      style={{
+        borderRadius: 999,
+        border: "1px solid #38bdf8",
+        background: "#38bdf8",
+        color: "#0f172a",
+        padding: "10px 18px",
+        fontSize: "0.95rem",
+        fontWeight: 600,
+        cursor: "pointer",
+      }}
+    >
+      Open Parent Portal
+    </button>
+    <p style={{ fontSize: "0.8rem", opacity: 0.85 }}>
+      Log in with the same email you used while registering / creating
+      child profiles.
+    </p>
+  </div>
+</section>
 
         {/* BENEFITS */}
         <section style={{ marginBottom: 40 }}>
