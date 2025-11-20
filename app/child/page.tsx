@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ChildProfile {
   id: string;
@@ -10,37 +10,62 @@ interface ChildProfile {
 }
 
 export default function ChildAuthPage() {
-  // Signup form
+  // SIGNUP STATE
   const [signupUsername, setSignupUsername] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupChildName, setSignupChildName] = useState("");
   const [signupParentEmail, setSignupParentEmail] = useState("");
 
   const [signupLoading, setSignupLoading] = useState(false);
-  const [signupMessage, setSignupMessage] = useState<string | null>(
-    null
-  );
+  const [signupMessage, setSignupMessage] = useState<string | null>(null);
   const [signupError, setSignupError] = useState<string | null>(null);
 
-  // Login form
+  // LOGIN STATE
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginParentEmail, setLoginParentEmail] = useState("");
+
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-const [loginParentEmail, setLoginParentEmail] = useState("");
-  const saveProfileLocal = (profile: ChildProfile) => {
+
+  // PREFILL PARENT EMAIL IF STORED (from parent portal)
+  useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      "cussap_child_profile",
-      JSON.stringify(profile)
-    );
+    try {
+      const stored = window.localStorage.getItem("cussap_parent_email");
+      if (stored) {
+        if (!signupParentEmail) setSignupParentEmail(stored);
+        if (!loginParentEmail) setLoginParentEmail(stored);
+      }
+    } catch (e) {
+      console.error("Failed to read parent email from storage", e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const saveChildProfileLocal = (profile: ChildProfile) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        "cussap_child_profile",
+        JSON.stringify(profile)
+      );
+    } catch (e) {
+      console.error("Failed to save child profile to localStorage", e);
+    }
   };
 
+  const redirectToStudent = () => {
+    if (typeof window === "undefined") return;
+    window.location.href = "/student";
+  };
+
+  // -------- SIGNUP HANDLER --------
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupLoading(true);
-    setSignupMessage(null);
     setSignupError(null);
+    setSignupMessage(null);
 
     try {
       const res = await fetch("/api/child-signup", {
@@ -57,11 +82,11 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to create profile");
+        throw new Error(data.error || "Failed to create child profile");
       }
 
       const profile: ChildProfile = data.profile;
-      saveProfileLocal(profile);
+      saveChildProfileLocal(profile);
 
       setSignupMessage(
         `Profile created for "${profile.childName}". Redirecting to quiz…`
@@ -69,11 +94,11 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
       setSignupUsername("");
       setSignupPassword("");
       setSignupChildName("");
-      setSignupParentEmail("");
+      // keep parent email in the box, so they can add more kids
 
       setTimeout(() => {
-        window.location.href = "/student";
-      }, 1000);
+        redirectToStudent();
+      }, 800);
     } catch (err: any) {
       console.error(err);
       setSignupError(err.message || "Something went wrong.");
@@ -82,6 +107,7 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
     }
   };
 
+  // -------- LOGIN HANDLER --------
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginLoading(true);
@@ -94,7 +120,7 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
         body: JSON.stringify({
           username: loginUsername,
           password: loginPassword,
-           parentEmail: loginParentEmail,
+          parentEmail: loginParentEmail,
         }),
       });
 
@@ -105,12 +131,22 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
       }
 
       const profile: ChildProfile = data.profile;
-      saveProfileLocal(profile);
+      saveChildProfileLocal(profile);
+
+      // also remember parent email for convenience
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          "cussap_parent_email",
+          profile.parentEmail.toLowerCase()
+        );
+      }
 
       setLoginUsername("");
       setLoginPassword("");
+      // keep loginParentEmail so switching kids is easy
+
       setTimeout(() => {
-        window.location.href = "/student";
+        redirectToStudent();
       }, 500);
     } catch (err: any) {
       console.error(err);
@@ -125,13 +161,13 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
       <div style={{ marginBottom: 16 }}>
         <div className="badge-tagline">
           <span className="badge-tagline-dot" />
-          Internal · Child Profiles
+          Kids Area · Child Profiles & Login
         </div>
-        <h1>Child Profiles & Login</h1>
+        <h1>Create / Login Child Profile</h1>
         <p style={{ fontSize: "0.9rem", opacity: 0.85 }}>
-          Parents can create a username + password for each child. Logged in
-          children get <strong>unlimited</strong> quizzes. Guests can only
-          attempt 2 quizzes on each device.
+          Parents can create a simple username + password for each child, tied
+          to the verified parent email. Children can then log in and attempt
+          unlimited quizzes on the <code>/student</code> page.
         </p>
       </div>
 
@@ -152,8 +188,9 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
         >
           <h2 style={{ marginBottom: 8 }}>Create child profile</h2>
           <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-            Use the same parent email you used on the home page (landing
-            registration), so we can group performance later.
+            Use the <strong>same parent email</strong> that you used while
+            registering / logging into the Parent Portal. Only registered parent
+            emails can create profiles.
           </p>
 
           <form
@@ -221,22 +258,23 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
             </label>
 
             <label style={{ display: "flex", flexDirection: "column" }}>
-  Parent email (same as registration)
-  <input
-    type="email"
-    required
-    value={loginParentEmail}
-    onChange={(e) => setSignupParentEmail(e.target.value)}
-    style={{
-      marginTop: 4,
-      borderRadius: 8,
-      border: "1px solid rgba(148,163,184,0.7)",
-      background: "rgba(15,23,42,0.95)",
-      color: "#e5e7eb",
-      padding: "6px 10px",
-    }}
-  />
-</label>
+              Parent email (verified)
+              <input
+                type="email"
+                required
+                value={signupParentEmail}
+                onChange={(e) => setSignupParentEmail(e.target.value)}
+                placeholder="parent@example.com"
+                style={{
+                  marginTop: 4,
+                  borderRadius: 8,
+                  border: "1px solid rgba(148,163,184,0.7)",
+                  background: "rgba(15,23,42,0.95)",
+                  color: "#e5e7eb",
+                  padding: "6px 10px",
+                }}
+              />
+            </label>
 
             <button
               type="submit"
@@ -291,8 +329,9 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
         >
           <h2 style={{ marginBottom: 8 }}>Child login</h2>
           <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-            Children can log in here (or parents can log in for them) and
-            then go to the quiz page.
+            Children can log in with <strong>username + password</strong> and
+            the registered <strong>parent email</strong>. After login, they can
+            directly use the quiz page.
           </p>
 
           <form
@@ -329,6 +368,24 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
                 required
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
+                style={{
+                  marginTop: 4,
+                  borderRadius: 8,
+                  border: "1px solid rgba(148,163,184,0.7)",
+                  background: "rgba(15,23,42,0.95)",
+                  color: "#e5e7eb",
+                  padding: "6px 10px",
+                }}
+              />
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column" }}>
+              Parent email
+              <input
+                type="email"
+                required
+                value={loginParentEmail}
+                onChange={(e) => setLoginParentEmail(e.target.value)}
                 style={{
                   marginTop: 4,
                   borderRadius: 8,
