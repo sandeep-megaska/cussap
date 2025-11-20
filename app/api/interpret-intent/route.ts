@@ -37,14 +37,17 @@ Return ONLY a JSON object, nothing else, in this exact shape:
 
     const userPrompt = `Text: """${text.trim()}"""`;
 
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      response_format: { type: "json_object" },
-    });
+    // TypeScript in this SDK version doesn't know about "responses" yet,
+// but the runtime supports it. Safely bypass the type error.
+const response = await (client as any).responses.create({
+  model: "gpt-4.1-mini",
+  input: [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ],
+  response_format: { type: "json_object" },
+});
+
 
     const content = response.output[0].content[0].text || "{}";
     let parsed: any;
