@@ -226,7 +226,7 @@ const [loginParentEmail, setLoginParentEmail] = useState("");
     type="email"
     required
     value={loginParentEmail}
-    onChange={(e) => setLoginParentEmail(e.target.value)}
+    onChange={(e) => setSignupParentEmail(e.target.value)}
     style={{
       marginTop: 4,
       borderRadius: 8,
