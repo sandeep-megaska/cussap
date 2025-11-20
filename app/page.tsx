@@ -15,45 +15,55 @@ export default function LandingPage() {
   const [notes, setNotes] = useState("");
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setSuccess(null);
-    setError(null);
+  e.preventDefault();
+  setSubmitting(true);
+  setSuccess(null);
+  setError(null);
 
-    try {
-      const res = await fetch("/api/registrations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          parentName,
-          parentEmail,
-          phone,
-          childrenCount,
-          childrenInfo,
-          notes,
-        }),
-      });
+  try {
+    const res = await fetch("/api/registrations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        parentName,
+        parentEmail,
+        phone,
+        childrenCount,
+        childrenInfo,
+        notes,
+      }),
+    });
 
-      const data = await res.json().catch(() => ({}));
+    const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to register");
-      }
-
-      setSuccess("Thanks! You’re in. We’ll email you your access soon.");
-      setParentName("");
-      setParentEmail("");
-      setPhone("");
-      setChildrenCount(1);
-      setChildrenInfo("");
-      setNotes("");
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Something went wrong.");
-    } finally {
-      setSubmitting(false);
+    // ✅ Special case: already registered with this email
+    if (res.status === 409 && data.alreadyRegistered) {
+      setSuccess(
+        data.message ||
+          "You are already registered with this email. You can go directly to the quiz or child login."
+      );
+      // Do NOT throw – treat this as a "soft success"
+      return;
     }
-  };
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to register");
+    }
+
+    setSuccess("Thanks! You’re in. We’ll email you your access soon.");
+    setParentName("");
+    setParentEmail("");
+    setPhone("");
+    setChildrenCount(1);
+    setChildrenInfo("");
+    setNotes("");
+  } catch (err: any) {
+    console.error(err);
+    setError(err.message || "Something went wrong.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const scrollToRegister = () => {
     const el = document.getElementById("register-section");
