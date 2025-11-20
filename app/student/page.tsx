@@ -34,6 +34,12 @@ interface ExplanationState {
   loading: boolean;
   error?: string;
 }
+interface ChildProfile {
+  id: string;
+  username: string;
+  childName: string;
+  parentEmail: string;
+}
 
 const PURPOSES: { value: Purpose; label: string }[] = [
   { value: "general", label: "General Practice" },
@@ -56,6 +62,9 @@ export default function StudentPage() {
   const [stage, setStage] = useState<Stage>("setup");
 
   // Core selections
+  const [childProfile, setChildProfile] = useState<ChildProfile | null>(null);
+const [anonQuizCount, setAnonQuizCount] = useState(0);
+
   const [grade, setGrade] = useState<Grade>(8);
   const [subject, setSubject] = useState<string>("Maths");
   const [chapter, setChapter] = useState<string>("");
@@ -79,6 +88,36 @@ export default function StudentPage() {
   const [explanations, setExplanations] = useState<
     Record<string, ExplanationState>
   >({});
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  try {
+    const stored = window.localStorage.getItem("cussap_child_profile");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && parsed.id && parsed.username) {
+        setChildProfile(parsed);
+        // Autofill student name & parent email from profile
+        setStudentName(parsed.childName || "");
+        setParentEmail(parsed.parentEmail || "");
+      }
+    }
+  } catch (e) {
+    console.error("Failed to read child profile from storage:", e);
+  }
+
+  try {
+    const raw = window.localStorage.getItem(
+      "cussap_anonymous_quiz_count"
+    );
+    if (raw) {
+      const n = Number(raw);
+      if (!Number.isNaN(n)) setAnonQuizCount(n);
+    }
+  } catch (e) {
+    console.error("Failed to read anonymous count:", e);
+  }
+}, []);
 
   // AI Instructor (global for current question in review)
   const [instructorLoading, setInstructorLoading] = useState(false);
@@ -354,6 +393,23 @@ export default function StudentPage() {
         </div>
         <h1>Smart CBSE Practice – AI Quiz</h1>
         <p>Choose your class, subject, and goal to get a customised quiz.</p>
+{childProfile ? (
+  <p style={{ fontSize: "0.85rem", color: "#9ca3af", marginTop: 4 }}>
+    Logged in as{" "}
+    <strong>{childProfile.username}</strong> (
+    {childProfile.childName}). Unlimited quizzes for this child.
+  </p>
+) : (
+  <p style={{ fontSize: "0.85rem", color: "#9ca3af", marginTop: 4 }}>
+    Guest mode: you can attempt{" "}
+    <strong>2 free quizzes</strong> on this device without login.
+    To unlock unlimited practice,{" "}
+    <a href="/child" style={{ textDecoration: "underline" }}>
+      create a free child profile
+    </a>
+    .
+  </p>
+)}
 
         {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
