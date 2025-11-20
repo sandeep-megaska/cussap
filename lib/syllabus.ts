@@ -272,19 +272,276 @@ export const SYLLABUS: Record<number, Record<string, string[]>> = {
     "Vector Algebra",
     "Three-dimensional Geometry",
     "Linear Programming",
-    "Probability",
+    "Probability"
+  ],
+}
+
+
+   Physics: [
+    // ELECTROSTATICS
+    "Electric Charges and Their Properties",
+    "Coulomb’s Law and Superposition Principle",
+    "Electric Field and Field Lines",
+    "Electric Flux and Gauss’s Theorem (and its Applications)",
+    "Electric Potential and Potential Difference",
+    "Equipotential Surfaces",
+    "Relation Between Electric Field and Potential",
+    "Electric Potential Energy of a System of Charges",
+    "Capacitors and Capacitance",
+    "Series and Parallel Combination of Capacitors",
+    "Energy Stored in a Capacitor",
+    "Dielectrics and Polarisation",
+
+    // CURRENT ELECTRICITY
+    "Electric Current and Drift Velocity",
+    "Ohm’s Law and Electrical Resistance",
+    "Resistivity and Conductivity",
+    "Temperature Dependence of Resistance",
+    "Combination of Resistors – Series and Parallel",
+    "Internal Resistance of Cell, EMF and Terminal Potential Difference",
+    "Cells in Series and Parallel",
+    "Wheatstone Bridge and Meter Bridge",
+    "Kirchhoff’s Laws and Simple Circuits",
+    "Potentiometer and Its Applications",
+
+    // MAGNETIC EFFECTS OF CURRENT AND MAGNETISM
+    "Magnetic Field due to a Current-Carrying Conductor",
+    "Biot–Savart Law and Its Applications",
+    "Magnetic Field on Axis of a Circular Loop",
+    "Force on a Moving Charge in a Magnetic Field",
+    "Force on a Current-Carrying Conductor",
+    "Torque on a Current Loop in a Magnetic Field",
+    "Moving Coil Galvanometer – Construction and Working",
+    "Conversion of Galvanometer to Ammeter and Voltmeter",
+    "Bar Magnet as an Equivalent Solenoid",
+    "Magnetic Field Lines of a Bar Magnet",
+    "Earth’s Magnetic Field – Elements and Their Values",
+    "Magnetic Properties of Materials (Diamagnetic, Paramagnetic, Ferromagnetic)",
+
+    // ELECTROMAGNETIC INDUCTION AND ALTERNATING CURRENTS
+    "Faraday’s Laws of Electromagnetic Induction",
+    "Lenz’s Law and Conservation of Energy",
+    "Self and Mutual Inductance",
+    "AC Generator – Principle and Working",
+    "Alternating Current and Its Representation",
+    "Peak and RMS Values of AC",
+    "Reactance and Impedance",
+    "LCR Series Circuit – Phasor Diagrams and Resonance",
+    "Power in AC Circuits and Power Factor",
+    "Transformers – Principle and Uses",
+
+    // ELECTROMAGNETIC WAVES
+    "Displacement Current and Maxwell’s Correction",
+    "Electromagnetic Waves and Their Characteristics",
+    "Electromagnetic Spectrum – Regions and Uses",
+
+    // RAY OPTICS AND OPTICAL INSTRUMENTS
+    "Reflection of Light by Spherical Mirrors",
+    "Refraction at Plane and Spherical Surfaces",
+    "Total Internal Reflection and Its Applications",
+    "Lens Formula and Magnification",
+    "Combination of Thin Lenses in Contact",
+    "Power of a Lens",
+    "Refraction through Prism",
+    "Human Eye and Its Defects (Myopia, Hypermetropia, Presbyopia, Astigmatism)",
+    "Microscope and Astronomical Telescope – Ray Diagrams and Magnifying Power",
+
+    // WAVE OPTICS
+    "Huygens’ Principle and Wavefront",
+    "Interference of Light – Young’s Double Slit Experiment",
+    "Coherent Sources and Fringe Width",
+    "Diffraction of Light (Single Slit Qualitative Idea)",
+    "Polarisation of Light",
+    "Uses of Polarised Light",
+
+    // DUAL NATURE OF RADIATION AND MATTER
+    "Photoelectric Effect – Experimental Study and Laws",
+    "Einstein’s Photoelectric Equation and Work Function",
+    "Particle Nature of Light",
+    "Wave–Particle Duality of Matter",
+    "De Broglie Wavelength",
+
+    // ATOMS AND NUCLEI
+    "Rutherford’s Nuclear Model of Atom",
+    "Bohr’s Model of Hydrogen Atom",
+    "Energy Levels and Spectral Series",
+    "Atomic Spectra of Hydrogen",
+    "Composition of Nucleus (Protons and Neutrons)",
+    "Mass Defect and Binding Energy",
+    "Nuclear Fission and Nuclear Fusion",
+    "Radioactivity – Alpha, Beta, Gamma Decay (Basic Idea)",
+
+    // SEMICONDUCTOR ELECTRONICS
+    "Energy Bands in Solids – Conductor, Insulator and Semiconductor",
+    "Intrinsic and Extrinsic Semiconductors",
+    "p-type and n-type Semiconductors",
+    "p–n Junction Diode and Its Characteristics",
+    "Diode as a Rectifier (Half-wave and Full-wave)",
+    "Zener Diode and Voltage Regulation (Basic Idea)",
+    "Logic Gates – OR, AND, NOT, NAND, NOR (Truth Tables and Simple Circuits)",
   ],
 
-  Physics: [
-    "Electric Charges and Fields",
-    "Electrostatic Potential and Capacitance",
-    "Current Electricity",
-    "Moving Charges and Magnetism",
-    "Magnetism and Matter",
-    "Electromagnetic Induction",
-    "Alternating Current",
-    "Electromagnetic Waves",
- ],
+  Chemistry: [
+    // SOLID STATE
+    "Crystalline and Amorphous Solids",
+    "Unit Cell and Crystal Lattices",
+    "Packing in Solids and Voids",
+    "Number of Atoms per Unit Cell in Simple, bcc and fcc Structures",
+    "Imperfections in Solids",
+    "Electrical and Magnetic Properties of Solids",
+
+    // SOLUTIONS
+    "Types of Solutions and Concentration Terms",
+    "Solubility and Factors Affecting It",
+    "Vapour Pressure of Solutions and Raoult’s Law",
+    "Ideal and Non-Ideal Solutions",
+    "Colligative Properties – Relative Lowering of Vapour Pressure",
+    "Elevation of Boiling Point and Depression of Freezing Point",
+    "Osmotic Pressure and Its Applications",
+    "Abnormal Molar Mass and Van’t Hoff Factor",
+
+    // ELECTROCHEMISTRY
+    "Redox Reactions and Electrochemical Cells",
+    "Galvanic Cells and EMF of Cell",
+    "Nernst Equation and Its Applications",
+    "Electrochemical Series and Its Use",
+    "Conductance of Electrolytic Solutions",
+    "Molar Conductivity and Its Variation with Concentration",
+    "Electrolysis and Faraday’s Laws",
+    "Batteries and Fuel Cells (Basic Idea)",
+
+    // CHEMICAL KINETICS
+    "Rate of a Chemical Reaction",
+    "Factors Affecting Rate of Reaction",
+    "Rate Law and Order of Reaction",
+    "Integrated Rate Equations for Zero and First Order Reactions",
+    "Half-life of a Reaction",
+    "Collision Theory (Elementary Idea)",
+    "Activation Energy and Arrhenius Equation",
+
+    // SURFACE CHEMISTRY
+    "Adsorption – Types and Characteristics",
+    "Freundlich Adsorption Isotherm (Empirical)",
+    "Catalysis – Homogeneous and Heterogeneous",
+    "Colloids – Types and Properties",
+    "Emulsions and Applications of Colloids",
+
+    // GENERAL PRINCIPLES AND PROCESSES OF ISOLATION OF ELEMENTS
+    "Occurrence of Metals and Ores",
+    "Concentration of Ores",
+    "Extraction of Crude Metal – Pyrometallurgy, Hydrometallurgy and Electrometallurgy (Basic Steps)",
+    "Thermodynamic Principles in Metallurgy (Ellingham Diagram – Idea Level)",
+    "Refining of Metals – Distillation, Liquation, Electrolytic Refining",
+    "Uses of Important Metals",
+
+    // p-BLOCK ELEMENTS (GROUP 15, 16, 17 & 18 – MAIN HIGHLIGHTS)
+    "Group 15 Elements – Nitrogen and Phosphorus – Properties and Important Compounds",
+    "Group 16 Elements – Oxygen and Sulfur – Properties and Important Compounds",
+    "Group 17 Elements – Halogens – Properties and Hydrogen Halides",
+    "Group 18 Elements – Noble Gases – General Characteristics and Uses",
+
+    // d- AND f-BLOCK ELEMENTS
+    "General Characteristics of Transition Elements (d-block)",
+    "Electronic Configuration, Variable Oxidation States, Catalytic Properties",
+    "Formation of Coloured Ions and Complexes",
+    "Inner Transition Elements (f-block) – Lanthanoids – Brief Overview",
+    "Important Compounds and Their Uses",
+
+    // COORDINATION COMPOUNDS
+    "Coordination Number and Ligands",
+    "Writing IUPAC Names of Coordination Compounds",
+    "Isomerism in Coordination Compounds",
+    "Bonding – Valence Bond Theory (Basic Idea)",
+    "Importance and Applications of Coordination Compounds",
+
+    // HALOALKANES AND HALOARENES
+    "Nomenclature and Classification of Haloalkanes and Haloarenes",
+    "Nature of C–X Bond and Reactivity",
+    "Substitution and Elimination Reactions of Haloalkanes",
+    "Uses and Environmental Effects of Some Halo Compounds",
+
+    // ALCOHOLS, PHENOLS AND ETHERS
+    "Classification and Nomenclature of Alcohols, Phenols and Ethers",
+    "Methods of Preparation and Properties of Alcohols",
+    "Methods of Preparation and Properties of Phenols",
+    "Ethers – Preparation and Reactions",
+    "Uses of Alcohols, Phenols and Ethers",
+
+    // ALDEHYDES, KETONES AND CARBOXYLIC ACIDS
+    "Nomenclature and Structure of Carbonyl Compounds",
+    "Preparation and Properties of Aldehydes and Ketones",
+    "Nucleophilic Addition Reactions",
+    "Oxidation and Reduction Reactions",
+    "Carboxylic Acids – Preparation and Properties",
+    "Acid Strength and Factors Affecting It",
+
+    // NITROGEN-CONTAINING ORGANIC COMPOUNDS
+    "Amines – Classification and Nomenclature",
+    "Basicity of Amines",
+    "Preparation and Properties of Amines",
+    "Diazonium Salts – Preparation and Synthetic Importance",
+
+    // BIOMOLECULES, POLYMERS & CHEMISTRY IN EVERYDAY LIFE
+    "Carbohydrates – Classification and Properties",
+    "Proteins – Primary, Secondary and Tertiary Structure (Idea)",
+    "Vitamins and Enzymes – Basic Ideas",
+    "Nucleic Acids – DNA and RNA (Elementary Idea)",
+    "Polymers – Types, Examples and Uses",
+    "Drugs – Analgesics, Antacids, Antihistamines, Antimicrobials",
+    "Cleansing Agents – Soaps and Detergents",
+  ],
+  Biology: [
+    // REPRODUCTION
+    "Reproduction in Organisms – Asexual and Sexual Reproduction",
+    "Sexual Reproduction in Flowering Plants – Structures and Processes",
+    "Double Fertilisation and Seed Formation",
+    "Human Reproduction – Male and Female Reproductive Systems",
+    "Gametogenesis, Menstrual Cycle and Fertilisation",
+    "Reproductive Health – Birth Control Methods and STDs",
+
+    // GENETICS AND EVOLUTION
+    "Principles of Inheritance – Mendel’s Laws",
+    "Monohybrid and Dihybrid Crosses",
+    "Chromosomal Basis of Inheritance",
+    "Linkage and Crossing Over (Basic Idea)",
+    "Mutations and Genetic Disorders (Simple Overview)",
+    "Molecular Basis of Inheritance – DNA Structure and Replication",
+    "Transcription and Translation (Protein Synthesis)",
+    "Genetic Code and Regulation of Gene Expression",
+    "Human Genome and DNA Fingerprinting (Elementary Idea)",
+    "Origin of Life – Basic Concepts of Evolution",
+    "Evidences and Theories of Biological Evolution",
+
+    // BIOLOGY AND HUMAN WELFARE
+    "Human Health and Diseases – Types and Prevention",
+    "Immunity and Vaccination",
+    "Common Diseases – AIDS, Cancer, Lifestyle Diseases (Overview)",
+    "Principles and Processes of Microbial Control",
+    "Microbes in Household Products",
+    "Microbes in Industrial Products (Antibiotics, Alcohols, etc.)",
+    "Microbes in Sewage Treatment and Energy Production",
+    "Microbes as Biocontrol Agents and Biofertilisers",
+
+    // BIOTECHNOLOGY
+    "Principles of Biotechnology – Genetic Engineering and Recombinant DNA",
+    "Tools of Recombinant DNA Technology – Restriction Enzymes, Vectors, etc.",
+    "Steps in Genetic Engineering – Isolation, Cutting, Ligation, Transformation",
+    "Applications of Biotechnology in Agriculture – Bt Crops, GM Plants",
+    "Biotechnology in Medicine – Insulin, Vaccines and Gene Therapy (Idea)",
+    "Ethical Issues and Biosafety in Biotechnology",
+
+    // ECOLOGY AND ENVIRONMENT
+    "Organisms and Populations – Adaptations and Interactions",
+    "Ecosystems – Structure and Function",
+    "Energy Flow and Food Chains",
+    "Ecological Pyramids and Nutrient Cycles",
+    "Biodiversity – Levels, Importance and Loss",
+    "Conservation of Biodiversity – In-situ and Ex-situ",
+    "Environmental Issues – Pollution, Global Warming, Ozone Depletion",
+    "Solid Waste Management and Sustainable Development",
+  ],
+},
+
 }
 };
 
