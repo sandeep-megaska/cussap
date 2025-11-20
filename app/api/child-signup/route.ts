@@ -21,12 +21,7 @@ export async function POST(req: NextRequest) {
       parentEmail: string;
     } = body;
 
-    if (
-      !username ||
-      !password ||
-      !childName ||
-      !parentEmail
-    ) {
+    if (!username || !password || !childName || !parentEmail) {
       return NextResponse.json(
         { error: "All fields are required" },
         { status: 400 }
@@ -50,7 +45,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if username taken
+    // ✅ 1) Check that parent email is already registered
+    // Here "registered" = exists in edtech_registrations (your landing/parent flow).
+    const { data: parentReg, error: parentRegError } = await supabase
+      .from("edtech_registrations")
+      .select("id")
+      .ilike("parent_email", cleanParentEmail)
+      .maybeSingle();
+
+    if (parentRegError) {
+      console.error("Error checking parent registration:", parentRegError);
+    }
+
+    if (!parentReg) {
+      return NextResponse.json(
+        {
+          error:
+            "This parent email is not registered yet. Please register / log in as a parent first, then create child profiles.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // 2) Check if username is already taken (global unique for now)
     const { data: existing, error: existingErr } = await supabase
       .from("child_accounts")
       .select("id")
@@ -63,13 +80,14 @@ export async function POST(req: NextRequest) {
 
     if (existing) {
       return NextResponse.json(
-        { error: "Username already taken. Please choose another." },
+        { error: "This username is already taken. Please choose another." },
         { status: 400 }
       );
     }
 
     const passwordHash = hashPassword(password);
 
+    // 3) Insert child account
     const { data, error } = await supabase
       .from("child_accounts")
       .insert({
