@@ -86,8 +86,8 @@ export default function LandingPage() {
             <Image
               src="/cussap.png"   // 👈 from /public
               alt="Smart CBSE Practice logo"
-              width={40}
-              height={40}
+              width={75}
+              height={75}
               className="site-logo"
             />
             <div className="site-brand-text">
