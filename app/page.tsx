@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+import Image from "next/image";
 export default function LandingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -83,7 +83,7 @@ export default function LandingPage() {
     flexWrap: "wrap",
   }}
 ><div className="site-header-left">
-            <Image
+            <Img
               src="/cussap.png"   // 👈 from /public
               alt="Smart CBSE Practice logo"
               width={40}
