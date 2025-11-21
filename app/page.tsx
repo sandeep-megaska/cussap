@@ -82,7 +82,21 @@ export default function LandingPage() {
     gap: 12,
     flexWrap: "wrap",
   }}
->
+><div className="site-header-left">
+            <Image
+              src="/cussap.png"   // 👈 from /public
+              alt="Smart CBSE Practice logo"
+              width={40}
+              height={40}
+              className="site-logo"
+            />
+            <div className="site-brand-text">
+              <div className="site-brand-name">Smart CBSE Practice</div>
+              <div className="site-brand-tagline">
+                Concept-first AI quiz for CBSE
+              </div>
+            </div>
+          </div>
   {/* Left: Logo + subtitle (you already have this) */}
   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
     {/* ... logo + title ... */}
