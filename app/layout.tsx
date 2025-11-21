@@ -20,7 +20,7 @@ export default function RootLayout({
        <header className="site-header">
           <div className="site-header-left">
             <Image
-              src="/smartcb-logo.png"   // 👈 from /public
+              src="cussap/cussa.png.png"   // 👈 from /public
               alt="Smart CBSE Practice logo"
               width={40}
               height={40}
