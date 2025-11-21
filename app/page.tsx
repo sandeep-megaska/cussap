@@ -98,11 +98,11 @@ export default function LandingPage() {
               <div
                 style={{
                   fontWeight: 700,
-                  fontSize: "1.1rem",
+                  fontSize: "1.9rem",
                   color: "#111827",
                 }}
               >
-              
+              Assess your depth of knowledge!
               </div>
               <div
                 style={{
