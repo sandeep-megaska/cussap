@@ -86,13 +86,21 @@ export default function LandingPage() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 999,
-                background:
-                  "linear-gradient(135deg, #2563eb, #22c55e)",
-              }}
+              <div className="site-header-left">
+            <Image
+              src="/cussap.png"   // 👈 from /public
+              alt="Smart CBSE Practice logo"
+              width={40}
+              height={40}
+              className="site-logo"
+            />
+            <div className="site-brand-text">
+              <div className="site-brand-name">Smart CBSE Practice</div>
+              <div className="site-brand-tagline">
+                Concept-first AI quiz for CBSE
+              </div>
+            </div>
+          </div>
             />
             <div>
               <div
