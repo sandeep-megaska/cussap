@@ -84,22 +84,7 @@ export default function LandingPage() {
             flexWrap: "wrap", // ⭐ helps on small screens
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            
-             
-              Assess your depth of knowledge!
-              </div>
-              <div
-                style={{
-                  fontSize: "0.8rem",
-                  color: "#6b7280",
-                  lineHeight: 1.2,
-                }}
-              >
-               
-              </div>
-            </div>
-          </div>
+         
 
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
            <nav
