@@ -423,12 +423,12 @@ a:hover {
 .site-brand-name {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #e5e7eb;
+  color: #ff;
 }
 
 .site-brand-tagline {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #fff;
 }
 
 /* Optional: nav area on the right */
