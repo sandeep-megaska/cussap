@@ -102,7 +102,7 @@ export default function LandingPage() {
                   color: "#111827",
                 }}
               >
-                <!--CUSSAP-->
+              
               </div>
               <div
                 style={{
@@ -111,7 +111,7 @@ export default function LandingPage() {
                   lineHeight: 1.2,
                 }}
               >
-                <!--CBSE AI Practice Lab-->
+               
               </div>
             </div>
           </div>
