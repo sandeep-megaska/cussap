@@ -86,30 +86,7 @@ export default function LandingPage() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             
-              <div className="site-header-left">
-            <Image
-              src="/cussap.png"   // 👈 from /public
-              alt="Smart CBSE Practice logo"
-              width={40}
-              height={40}
-              className="site-logo"
-            />
-            <div className="site-brand-text">
-              <div className="site-brand-name">Smart CBSE Practice</div>
-              <div className="site-brand-tagline">
-                Concept-first AI quiz for CBSE
-              </div>
-            </div>
-          </div>
-            
-            <div>
-              <div
-                style={{
-                  fontWeight: 700,
-                  fontSize: "1.9rem",
-                  color: "#111827",
-                }}
-              >
+             
               Assess your depth of knowledge!
               </div>
               <div
