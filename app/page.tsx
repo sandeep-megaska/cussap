@@ -73,21 +73,23 @@ export default function LandingPage() {
   return (
     <div className="landing-root">
       <main className="landing-main">
-        {/* HEADER (light) */}
         <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 24,
-            gap: 12,
-            flexWrap: "wrap", // ⭐ helps on small screens
-          }}
-        >
-         
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+    gap: 12,
+    flexWrap: "wrap",
+  }}
+>
+  {/* Left: Logo + subtitle (you already have this) */}
+  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    {/* ... logo + title ... */}
+  </div>
 
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-           <nav
+  {/* Right: Nav buttons */}
+  <nav
     style={{
       display: "flex",
       gap: 8,
@@ -159,9 +161,7 @@ export default function LandingPage() {
       Pricing
     </button>
   </nav>
-          </div>
-        </header>
-
+</header>
         {/* HERO */}
         <section className="landing-hero">
           <div>
