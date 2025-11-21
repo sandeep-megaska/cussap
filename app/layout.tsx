@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="app-body">
-        <!--
+        {/*
         <header className="site-header">
           <div className="site-header-left">
             <Image
@@ -42,7 +42,7 @@ export default function RootLayout({
           </nav>
           */}
         </header> 
-          -->
+       */}
      
 
       
