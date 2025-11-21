@@ -83,7 +83,7 @@ export default function LandingPage() {
     flexWrap: "wrap",
   }}
 ><div className="site-header-left">
-            <Img
+            <Image
               src="/cussap.png"   // 👈 from /public
               alt="Smart CBSE Practice logo"
               width={40}
