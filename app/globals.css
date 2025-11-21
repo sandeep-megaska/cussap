@@ -391,3 +391,50 @@ a:hover {
 .admin-td {
   font-size: 0.8rem;
 }
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  background: #020617; /* matches your dark theme */
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.site-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-logo {
+  border-radius: 9999px;
+}
+
+.site-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.site-brand-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.site-brand-tagline {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* Optional: nav area on the right */
+.site-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
