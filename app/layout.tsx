@@ -35,12 +35,12 @@ export default function RootLayout({
             </div>
           </div>
 
-          {/* Right side: your existing nav buttons, if any */}
-          {/* Example:
+          Right side: your existing nav buttons, if any
+      Example:
           <nav className="site-nav">
             ...Try Quiz Now / Parent Portal / Kids Area buttons...
           </nav>
-          */}
+          
         </header> 
        */}
      
