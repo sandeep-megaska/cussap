@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+  import type { Metadata } from "next";
 import Image from "next/image";
 
 import "./globals.css";
@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="app-body">
-       <header className="site-header">
+        {/* <header className="site-header">
           <div className="site-header-left">
             <Image
               src="/cussap.png"   // 👈 from /public
@@ -40,7 +40,7 @@ export default function RootLayout({
             ...Try Quiz Now / Parent Portal / Kids Area buttons...
           </nav>
           */}
-        </header>
+        </header> */}
      
 
       
