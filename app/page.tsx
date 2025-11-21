@@ -85,7 +85,7 @@ export default function LandingPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div
+            
               <div className="site-header-left">
             <Image
               src="/cussap.png"   // 👈 from /public
